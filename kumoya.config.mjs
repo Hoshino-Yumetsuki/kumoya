@@ -3,9 +3,8 @@ export const kumoyaConfig = {
   outputFolder: 'dist',
   bundle: true,
   outputType: true,
-  format: 'esm',
+  format: 'both',
   platform: 'node',
   packages: 'external',
-  minify: true,
-  extension: 'mjs',
+  minify: true
 };

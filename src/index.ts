@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { loadConfig } from "./config-loader";
-import { Builder } from "./builder";
-import { logger, BuildError } from "./logger";
+import { loadConfig } from "./utils/configLoader";
+import { Builder } from "./utils/build";
+import { logger, BuildError } from "./utils/logger";
 
 async function main() {
   try {
@@ -24,6 +24,6 @@ async function main() {
 
 main();
 
-export { Builder } from "./builder";
-export { loadConfig } from "./config-loader";
+export { Builder } from "./utils/build";
+export { loadConfig } from "./utils/configLoader";
 export type { BuilderOptions, KumoyaConfig } from "./types";

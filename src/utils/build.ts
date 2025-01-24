@@ -5,7 +5,7 @@ import multi from "@rollup/plugin-multi-entry";
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as path from "path";
-import { BuilderOptions, KumoyaConfig } from "./types";
+import { BuilderOptions, KumoyaConfig } from "../types";
 import * as fs from "fs";
 import { minimatch } from "minimatch";
 import { BuildError, logger } from "./logger";

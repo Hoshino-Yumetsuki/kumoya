@@ -1,9 +1,36 @@
 {
   "name": "kumoya",
-  "packageManager": "yarn@4.4.1",
-  "bin": {
-    "kumoya": "./src/index.ts"
+  "version": "1.0.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
   },
+  "bin": "./dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "workspace",
+    "cli",
+    "script",
+    "build"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hoshino-Yumetsuki/kumoya.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hoshino-Yumetsuki/kumoya/issues"
+  },
+  "homepage": "https://github.com/Hoshino-Yumetsuki/kumoya",
   "scripts": {
     "lint": "eslint src",
     "lint-fix": "eslint src --fix",
@@ -30,5 +57,6 @@
     "rollup": "^4.32.0",
     "rollup-plugin-delete": "^2.1.0",
     "rollup-plugin-dts": "^6.1.1"
-  }
+  },
+  "packageManager": "yarn@4.4.1"
 }
