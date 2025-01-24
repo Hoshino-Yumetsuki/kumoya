@@ -35,7 +35,6 @@ export class Builder {
       );
     }
 
-    // 验证 extension 的有效性
     if (
       this.config.extension &&
       !["js", "cjs", "mjs"].includes(this.config.extension)
