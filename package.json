@@ -34,7 +34,7 @@
   "scripts": {
     "lint": "eslint src",
     "lint-fix": "eslint src --fix",
-    "build": "node esbuild.config.mjs && tsc --emitDeclarationOnly && rollup -c rollup.config.mjs"
+    "build": "kumoya"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.21.0",
