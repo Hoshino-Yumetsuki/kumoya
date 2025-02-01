@@ -4,13 +4,21 @@ import { logger, BuildError } from "./modules/logger";
 
 async function main() {
   const args = process.argv.slice(2);
+  const command = args[0];
 
-  if (args.length === 0) {
-    logger.info("");
+  // 无参数或 init 命令时执行初始化
+  if (!command || command === "init") {
+    try {
+      await loadConfig();
+      logger.info("");
+    } catch (error) {
+      logger.error(error);
+      process.exit(1);
+    }
     return;
   }
 
-  if (args[0] === "build") {
+  if (command === "build") {
     try {
       const config = await loadConfig();
       logger.info("Starting build process...");
@@ -28,7 +36,7 @@ async function main() {
       process.exit(1);
     }
   } else {
-    logger.error(`Unknown command: ${args[0]}`);
+    logger.error(`Unknown command: ${command}`);
     process.exit(1);
   }
 }

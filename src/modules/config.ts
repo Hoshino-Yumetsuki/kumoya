@@ -9,7 +9,10 @@ export async function loadConfig(
 ): Promise<BuilderOptions> {
   const fullPath = path.resolve(process.cwd(), configPath);
 
-  initializeConfig(configPath);
+  const isNewConfig = initializeConfig(configPath);
+  if (isNewConfig) {
+    process.exit(0);
+  }
 
   try {
     const configUrl = pathToFileURL(fullPath).href;

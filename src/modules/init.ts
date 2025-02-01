@@ -60,7 +60,7 @@ export function validateKumoyaConfig(config: any): KumoyaConfig {
   return validatedConfig;
 }
 
-export function initializeConfig(configPath: string): void {
+export function initializeConfig(configPath: string): boolean {
   const fullPath = path.resolve(process.cwd(), configPath);
 
   if (!fs.existsSync(fullPath)) {
@@ -68,9 +68,10 @@ export function initializeConfig(configPath: string): void {
     try {
       fs.writeFileSync(fullPath, defaultConfig, "utf-8");
       logger.success(`Default config file created: ${configPath}`);
-      process.exit(0);
+      return true;
     } catch (error) {
       throw new Error(`Failed to create config file: ${error.message}`);
     }
   }
+  return false;
 }
