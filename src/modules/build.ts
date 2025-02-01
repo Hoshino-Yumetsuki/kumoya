@@ -87,10 +87,12 @@ export class Builder {
       format = ext === "mjs" ? "esm" : "cjs";
     } else {
       const extension = this.getOutputExtension(format);
-      outputFile = path.join(
-        this.config.outputFolder!,
-        `${path.parse(entry).name}${extension}`,
-      ).replace(/\\/g, '/');
+      outputFile = path
+        .join(
+          this.config.outputFolder!,
+          `${path.parse(entry).name}${extension}`,
+        )
+        .replace(/\\/g, "/");
     }
 
     if (this.config.packages && this.config.external) {
@@ -117,7 +119,9 @@ export class Builder {
     if (this.config.external?.length)
       buildOptions.external = this.config.external;
 
-    logger.info(`${path.posix.normalize(entry)} ==> ${path.posix.normalize(outputFile)}`);
+    logger.info(
+      `${path.posix.normalize(entry)} ==> ${path.posix.normalize(outputFile)}`,
+    );
 
     await esbuild.build({
       ...buildOptions,
@@ -149,11 +153,11 @@ export class Builder {
   }
 
   private normalizePath(p: string): string {
-    return p.replace(/\\/g, '/');
+    return p.replace(/\\/g, "/");
   }
 
   private async buildTypes() {
-    const tmpDir = path.join(process.cwd(), ".kumoyatmp").replace(/\\/g, '/');
+    const tmpDir = path.join(process.cwd(), ".kumoyatmp").replace(/\\/g, "/");
     const entryDirs = this.getEntryDirs();
     const dirs = Object.keys(entryDirs);
     const dtsBundler = new DtsBundler();
@@ -166,7 +170,7 @@ export class Builder {
         const parsedConfig = ts.parseJsonConfigFileContent(
           configFile.config,
           ts.sys,
-          path.dirname(tsConfigPath)
+          path.dirname(tsConfigPath),
         );
 
         // 创建编译选项
@@ -177,28 +181,30 @@ export class Builder {
           noEmit: false,
         };
 
-        if (dirs.length === 1 && (this.isInTsConfig(dirs[0]) || parsedConfig.options.rootDir)) {
+        if (
+          dirs.length === 1 &&
+          (this.isInTsConfig(dirs[0]) || parsedConfig.options.rootDir)
+        ) {
           const rootDir = parsedConfig.options.rootDir || dirs[0];
           const program = ts.createProgram(
-            Array.isArray(this.config.entry) ? this.config.entry : [this.config.entry],
+            Array.isArray(this.config.entry)
+              ? this.config.entry
+              : [this.config.entry],
             {
               ...compilerOptions,
               rootDir,
               outDir: tmpDir,
-            }
+            },
           );
           program.emit();
         } else {
           for (const dir of dirs) {
             const dirTmpPath = path.join(tmpDir, path.basename(dir));
-            const program = ts.createProgram(
-              entryDirs[dir],
-              {
-                ...compilerOptions,
-                rootDir: dir,
-                outDir: dirTmpPath,
-              }
-            );
+            const program = ts.createProgram(entryDirs[dir], {
+              ...compilerOptions,
+              rootDir: dir,
+              outDir: dirTmpPath,
+            });
             program.emit();
           }
         }
@@ -212,7 +218,9 @@ export class Builder {
           const finalOutputDir = this.config.outfile
             ? path.dirname(this.config.outfile)
             : this.config.outputFolder!;
-          const outputFile = path.join(finalOutputDir, `${entryName}.d.ts`).replace(/\\/g, '/');
+          const outputFile = path
+            .join(finalOutputDir, `${entryName}.d.ts`)
+            .replace(/\\/g, "/");
 
           await dtsBundler.bundleTypes(tmpDir, outputFile, entry);
         }
@@ -226,18 +234,20 @@ export class Builder {
         const parsedConfig = ts.parseJsonConfigFileContent(
           configFile.config,
           ts.sys,
-          path.dirname(tsConfigPath)
+          path.dirname(tsConfigPath),
         );
 
         const program = ts.createProgram(
-          Array.isArray(this.config.entry) ? this.config.entry : [this.config.entry],
+          Array.isArray(this.config.entry)
+            ? this.config.entry
+            : [this.config.entry],
           {
             ...parsedConfig.options,
             declaration: true,
             emitDeclarationOnly: true,
             noEmit: false,
             outDir: this.config.outputFolder,
-          }
+          },
         );
         program.emit();
       }

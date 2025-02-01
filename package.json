@@ -34,7 +34,7 @@
   "scripts": {
     "lint": "eslint src",
     "lint-fix": "eslint src --fix",
-    "build": "kumoya"
+    "build": "kumoya build"
   },
   "devDependencies": {
     "@types/node": "^22.13.0",

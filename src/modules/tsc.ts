@@ -11,10 +11,6 @@ interface DtsModule {
 }
 
 export class DtsBundler {
-  private normalizePath(p: string): string {
-    return p.replace(/\\/g, '/');
-  }
-
   private parseDtsContent(filePath: string): DtsModule {
     const content = fs.readFileSync(filePath, "utf-8");
     const sourceFile = ts.createSourceFile(
@@ -28,13 +24,11 @@ export class DtsBundler {
     const exports = new Set<string>();
     const references = [];
 
-    // 解析三斜线引用指令
     const tripleSlashRefs = sourceFile.referencedFiles.map(
       (ref) => ref.fileName,
     );
     references.push(...tripleSlashRefs);
 
-    // 遍历 AST
     function visit(node: ts.Node) {
       if (ts.isImportDeclaration(node)) {
         const moduleSpecifier = node.moduleSpecifier
@@ -64,7 +58,7 @@ export class DtsBundler {
   public async bundleTypes(
     tmpDir: string,
     outputFile: string,
-    entryPoint?: string
+    entryPoint?: string,
   ): Promise<void> {
     // 读取所有声明文件
     const declarationFiles: string[] = [];
@@ -82,13 +76,11 @@ export class DtsBundler {
     };
     readDtsFiles(tmpDir);
 
-    // 解析所有声明文件
     const modules = new Map<string, DtsModule>();
     for (const file of declarationFiles) {
       modules.set(file, this.parseDtsContent(file));
     }
 
-    // 构建依赖图并排序
     const graph = new Map<string, Set<string>>();
     modules.forEach((module, file) => {
       graph.set(file, new Set());
@@ -106,7 +98,6 @@ export class DtsBundler {
       });
     });
 
-    // 拓扑排序
     const visited = new Set<string>();
     const sorted: string[] = [];
 
@@ -122,7 +113,6 @@ export class DtsBundler {
 
     declarationFiles.forEach((file) => visit(file));
 
-    // 合并声明文件
     const seenExports = new Set<string>();
     let mergedContent = "";
 
@@ -130,7 +120,6 @@ export class DtsBundler {
       const module = modules.get(file)!;
       const lines = module.content.split("\n");
 
-      // 过滤重复的导出
       const filteredLines = lines.filter((line) => {
         if (line.trim().startsWith("export")) {
           const exportName = line.match(
@@ -149,14 +138,16 @@ export class DtsBundler {
       mergedContent += filteredLines.join("\n") + "\n";
     }
 
-    // 修改日志输出格式
     if (entryPoint) {
-      logger.info(`${path.posix.normalize(entryPoint)} ==> ${path.posix.normalize(outputFile)}`);
+      logger.info(
+        `${path.posix.normalize(entryPoint)} ==> ${path.posix.normalize(outputFile)}`,
+      );
     } else {
-      logger.info(`${path.posix.normalize(tmpDir)} ==> ${path.posix.normalize(outputFile)}`);
+      logger.info(
+        `${path.posix.normalize(tmpDir)} ==> ${path.posix.normalize(outputFile)}`,
+      );
     }
 
-    // 写入合并后的声明文件
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, mergedContent);
   }
