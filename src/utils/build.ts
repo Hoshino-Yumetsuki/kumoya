@@ -7,6 +7,7 @@ import * as fs from "fs";
 import { minimatch } from "minimatch";
 import { BuildError, logger } from "./logger";
 import { DtsBundler } from "./dts-bundler";
+import * as ts from "typescript";
 
 const execAsync = promisify(exec);
 
@@ -166,21 +167,46 @@ export class Builder {
 
     try {
       if (this.config.bundle) {
-        if (
-          dirs.length === 1 &&
-          (this.isInTsConfig(dirs[0]) ||
-            this.tsConfig?.compilerOptions?.rootDir)
-        ) {
-          const rootDir = this.tsConfig?.compilerOptions?.rootDir || dirs[0];
-          await execAsync(
-            `tsc --declaration --emitDeclarationOnly --rootDir ${rootDir} --outDir ${tmpDir}`,
+        // 解析 tsconfig.json
+        const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
+        const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
+        const parsedConfig = ts.parseJsonConfigFileContent(
+          configFile.config,
+          ts.sys,
+          path.dirname(tsConfigPath)
+        );
+
+        // 创建编译选项
+        const compilerOptions: ts.CompilerOptions = {
+          ...parsedConfig.options,
+          declaration: true,
+          emitDeclarationOnly: true,
+          noEmit: false,
+        };
+
+        if (dirs.length === 1 && (this.isInTsConfig(dirs[0]) || parsedConfig.options.rootDir)) {
+          const rootDir = parsedConfig.options.rootDir || dirs[0];
+          const program = ts.createProgram(
+            Array.isArray(this.config.entry) ? this.config.entry : [this.config.entry],
+            {
+              ...compilerOptions,
+              rootDir,
+              outDir: tmpDir,
+            }
           );
+          program.emit();
         } else {
           for (const dir of dirs) {
             const dirTmpPath = path.join(tmpDir, path.basename(dir));
-            await execAsync(
-              `tsc --declaration --emitDeclarationOnly --rootDir ${dir} --outDir ${dirTmpPath} ${entryDirs[dir].join(" ")}`,
+            const program = ts.createProgram(
+              entryDirs[dir],
+              {
+                ...compilerOptions,
+                rootDir: dir,
+                outDir: dirTmpPath,
+              }
             );
+            program.emit();
           }
         }
 
@@ -202,9 +228,25 @@ export class Builder {
           fs.rmSync(tmpDir, { recursive: true, force: true });
         }
       } else {
-        await execAsync(
-          `tsc --declaration --emitDeclarationOnly --outDir ${this.config.outputFolder}`,
+        const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
+        const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
+        const parsedConfig = ts.parseJsonConfigFileContent(
+          configFile.config,
+          ts.sys,
+          path.dirname(tsConfigPath)
         );
+
+        const program = ts.createProgram(
+          Array.isArray(this.config.entry) ? this.config.entry : [this.config.entry],
+          {
+            ...parsedConfig.options,
+            declaration: true,
+            emitDeclarationOnly: true,
+            noEmit: false,
+            outDir: this.config.outputFolder,
+          }
+        );
+        program.emit();
       }
     } catch (error) {
       if (fs.existsSync(tmpDir)) {
