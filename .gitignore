@@ -24,7 +24,6 @@ tsconfig.tsbuildinfo
 *.test.js
 *.test.jsx
 
-# use yakumo!!!
-yarn.lock
-package-lock.json
-.pnp.js
+# use kumoya!!!
+.kumoyatmp
+index.mjs

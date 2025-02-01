@@ -101,7 +101,7 @@ export class Builder {
       outputFile = path.join(
         this.config.outputFolder!,
         `${path.parse(entry).name}${extension}`,
-      );
+      ).replace(/\\/g, '/');
     }
 
     if (this.config.packages && this.config.external) {
@@ -128,7 +128,7 @@ export class Builder {
     if (this.config.external?.length)
       buildOptions.external = this.config.external;
 
-    logger.info(`${entry} ==> ${outputFile}`);
+    logger.info(`${path.posix.normalize(entry)} ==> ${path.posix.normalize(outputFile)}`);
 
     await esbuild.build({
       ...buildOptions,
@@ -159,8 +159,12 @@ export class Builder {
     );
   }
 
+  private normalizePath(p: string): string {
+    return p.replace(/\\/g, '/');
+  }
+
   private async buildTypes() {
-    const tmpDir = path.join(process.cwd(), ".kumoyatmp");
+    const tmpDir = path.join(process.cwd(), ".kumoyatmp").replace(/\\/g, '/');
     const entryDirs = this.getEntryDirs();
     const dirs = Object.keys(entryDirs);
     const dtsBundler = new DtsBundler();
@@ -219,9 +223,9 @@ export class Builder {
           const finalOutputDir = this.config.outfile
             ? path.dirname(this.config.outfile)
             : this.config.outputFolder!;
-          const outputFile = path.join(finalOutputDir, `${entryName}.d.ts`);
+          const outputFile = path.join(finalOutputDir, `${entryName}.d.ts`).replace(/\\/g, '/');
 
-          await dtsBundler.bundleTypes(tmpDir, outputFile);
+          await dtsBundler.bundleTypes(tmpDir, outputFile, entry);
         }
 
         if (fs.existsSync(tmpDir)) {

@@ -11,6 +11,10 @@ interface DtsModule {
 }
 
 export class DtsBundler {
+  private normalizePath(p: string): string {
+    return p.replace(/\\/g, '/');
+  }
+
   private parseDtsContent(filePath: string): DtsModule {
     const content = fs.readFileSync(filePath, "utf-8");
     const sourceFile = ts.createSourceFile(
@@ -57,7 +61,11 @@ export class DtsBundler {
     };
   }
 
-  public async bundleTypes(tmpDir: string, outputFile: string): Promise<void> {
+  public async bundleTypes(
+    tmpDir: string,
+    outputFile: string,
+    entryPoint?: string
+  ): Promise<void> {
     // 读取所有声明文件
     const declarationFiles: string[] = [];
     const readDtsFiles = (dir: string) => {
@@ -141,10 +149,15 @@ export class DtsBundler {
       mergedContent += filteredLines.join("\n") + "\n";
     }
 
+    // 修改日志输出格式
+    if (entryPoint) {
+      logger.info(`${path.posix.normalize(entryPoint)} ==> ${path.posix.normalize(outputFile)}`);
+    } else {
+      logger.info(`${path.posix.normalize(tmpDir)} ==> ${path.posix.normalize(outputFile)}`);
+    }
+
     // 写入合并后的声明文件
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, mergedContent);
-
-    logger.info(`Generated bundled declaration file: ${outputFile}`);
   }
 }
