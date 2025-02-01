@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-import { loadConfig } from "./utils/configLoader";
-import { Builder } from "./utils/build";
-import { logger, BuildError } from "./utils/logger";
+import { loadConfig } from "./modules/config";
+import { Builder } from "./modules/build";
+import { logger, BuildError } from "./modules/logger";
 
 async function main() {
   try {

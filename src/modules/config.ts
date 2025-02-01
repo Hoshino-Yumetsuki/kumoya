@@ -2,7 +2,7 @@ import { BuilderOptions } from "../types";
 import * as path from "path";
 import { BuildError } from "./logger";
 import { pathToFileURL } from "url";
-import { validateKumoyaConfig, initializeConfig } from "./envSolver";
+import { validateKumoyaConfig, initializeConfig } from "./init";
 
 export async function loadConfig(
   configPath: string = "kumoya.config.mjs",

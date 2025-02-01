@@ -34,7 +34,7 @@ export const logger = {
     }
   },
   success: (message: string) => {
-    console.log(`${prefix} ${chalk.green("✓")} Done!`);
+    console.log(`${prefix} ${chalk.green("✓")} ${message}`);
   },
   warn: (message: string) => {
     console.log(`${prefix} ${chalk.yellow("⚠")} ${message}`);

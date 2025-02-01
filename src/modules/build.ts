@@ -1,22 +1,11 @@
 import * as esbuild from "esbuild";
-import { exec } from "child_process";
-import { promisify } from "util";
 import * as path from "path";
 import { BuilderOptions, KumoyaConfig } from "../types";
 import * as fs from "fs";
 import { minimatch } from "minimatch";
 import { BuildError, logger } from "./logger";
-import { DtsBundler } from "./dts-bundler";
+import { DtsBundler } from "./tsc";
 import * as ts from "typescript";
-
-const execAsync = promisify(exec);
-
-interface DtsModule {
-  content: string;
-  imports: Set<string>;
-  exports: Set<string>;
-  references: string[];
-}
 
 export class Builder {
   private config: KumoyaConfig;
