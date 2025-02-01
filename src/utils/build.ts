@@ -1,5 +1,4 @@
 import * as esbuild from "esbuild";
-import { rollup } from "rollup";
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as path from "path";
@@ -7,7 +6,6 @@ import { BuilderOptions, KumoyaConfig } from "../types";
 import * as fs from "fs";
 import { minimatch } from "minimatch";
 import { BuildError, logger } from "./logger";
-import * as ts from "typescript";
 import { DtsBundler } from "./dts-bundler";
 
 const execAsync = promisify(exec);
@@ -22,7 +20,6 @@ interface DtsModule {
 export class Builder {
   private config: KumoyaConfig;
   private esbuildConfig: any;
-  private rollupConfig: any;
   private tsConfig: any;
 
   constructor(options: BuilderOptions) {
@@ -82,7 +79,6 @@ export class Builder {
     }
 
     this.esbuildConfig = options.esbuildConfig;
-    this.rollupConfig = options.rollupConfig;
   }
 
   private getOutputExtension(format: "esm" | "cjs"): string {
@@ -160,52 +156,6 @@ export class Builder {
       include.some((pattern: string) => minimatch(filePath, pattern)) &&
       !exclude.some((pattern: string) => minimatch(filePath, pattern))
     );
-  }
-
-  private parseDtsContent(filePath: string): DtsModule {
-    const content = fs.readFileSync(filePath, "utf-8");
-    const sourceFile = ts.createSourceFile(
-      filePath,
-      content,
-      ts.ScriptTarget.Latest,
-      true,
-    );
-
-    const imports = new Set<string>();
-    const exports = new Set<string>();
-    const references = [];
-
-    // 解析三斜线引用指令
-    const tripleSlashRefs = sourceFile.referencedFiles.map(
-      (ref) => ref.fileName,
-    );
-    references.push(...tripleSlashRefs);
-
-    // 遍历 AST
-    function visit(node: ts.Node) {
-      if (ts.isImportDeclaration(node)) {
-        const moduleSpecifier = node.moduleSpecifier
-          .getText()
-          .replace(/['"]/g, "");
-        imports.add(moduleSpecifier);
-      } else if (ts.isExportDeclaration(node)) {
-        if (node.moduleSpecifier) {
-          const moduleSpecifier = node.moduleSpecifier
-            .getText()
-            .replace(/['"]/g, "");
-          exports.add(moduleSpecifier);
-        }
-      }
-      ts.forEachChild(node, visit);
-    }
-    visit(sourceFile);
-
-    return {
-      content,
-      imports,
-      exports,
-      references,
-    };
   }
 
   private async buildTypes() {

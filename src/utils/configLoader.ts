@@ -26,7 +26,6 @@ export async function loadConfig(
     return {
       kumoyaConfig: validateKumoyaConfig(config.kumoyaConfig),
       esbuildConfig: config.esbuildConfig,
-      rollupConfig: config.rollupConfig,
     };
   } catch (error) {
     if (error instanceof BuildError) {
