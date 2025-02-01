@@ -1,7 +1,5 @@
 import * as esbuild from "esbuild";
 import { rollup } from "rollup";
-import dts from "rollup-plugin-dts";
-import multi from "@rollup/plugin-multi-entry";
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as path from "path";
@@ -9,8 +7,17 @@ import { BuilderOptions, KumoyaConfig } from "../types";
 import * as fs from "fs";
 import { minimatch } from "minimatch";
 import { BuildError, logger } from "./logger";
+import * as ts from "typescript";
+import { DtsBundler } from "./dts-bundler";
 
 const execAsync = promisify(exec);
+
+interface DtsModule {
+  content: string;
+  imports: Set<string>;
+  exports: Set<string>;
+  references: string[];
+}
 
 export class Builder {
   private config: KumoyaConfig;
@@ -155,10 +162,57 @@ export class Builder {
     );
   }
 
+  private parseDtsContent(filePath: string): DtsModule {
+    const content = fs.readFileSync(filePath, "utf-8");
+    const sourceFile = ts.createSourceFile(
+      filePath,
+      content,
+      ts.ScriptTarget.Latest,
+      true,
+    );
+
+    const imports = new Set<string>();
+    const exports = new Set<string>();
+    const references = [];
+
+    // 解析三斜线引用指令
+    const tripleSlashRefs = sourceFile.referencedFiles.map(
+      (ref) => ref.fileName,
+    );
+    references.push(...tripleSlashRefs);
+
+    // 遍历 AST
+    function visit(node: ts.Node) {
+      if (ts.isImportDeclaration(node)) {
+        const moduleSpecifier = node.moduleSpecifier
+          .getText()
+          .replace(/['"]/g, "");
+        imports.add(moduleSpecifier);
+      } else if (ts.isExportDeclaration(node)) {
+        if (node.moduleSpecifier) {
+          const moduleSpecifier = node.moduleSpecifier
+            .getText()
+            .replace(/['"]/g, "");
+          exports.add(moduleSpecifier);
+        }
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(sourceFile);
+
+    return {
+      content,
+      imports,
+      exports,
+      references,
+    };
+  }
+
   private async buildTypes() {
     const tmpDir = path.join(process.cwd(), ".kumoyatmp");
     const entryDirs = this.getEntryDirs();
     const dirs = Object.keys(entryDirs);
+    const dtsBundler = new DtsBundler();
 
     try {
       if (this.config.bundle) {
@@ -183,6 +237,7 @@ export class Builder {
         const entries = Array.isArray(this.config.entry)
           ? this.config.entry
           : [this.config.entry];
+
         for (const entry of entries) {
           const entryName = path.parse(entry).name;
           const finalOutputDir = this.config.outfile
@@ -190,17 +245,7 @@ export class Builder {
             : this.config.outputFolder!;
           const outputFile = path.join(finalOutputDir, `${entryName}.d.ts`);
 
-          logger.info(`${entry} ==> ${outputFile}`);
-
-          const bundle = await rollup({
-            input: `${tmpDir}/**/*.d.ts`,
-            plugins: [multi(), dts(), ...(this.rollupConfig?.plugins || [])],
-          });
-
-          await bundle.write({
-            file: outputFile,
-            format: "es",
-          });
+          await dtsBundler.bundleTypes(tmpDir, outputFile);
         }
 
         if (fs.existsSync(tmpDir)) {
