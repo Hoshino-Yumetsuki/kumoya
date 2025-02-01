@@ -37,6 +37,7 @@
     "build": "kumoya"
   },
   "devDependencies": {
+    "@types/node": "^22.13.0",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
     "eslint": "^9.15.0",
@@ -46,17 +47,13 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-promise": "^7.1.0",
-    "kumoya": "^1.0.0",
+    "kumoya": "^1.1.0",
     "prettier": "^3.3.3"
   },
   "dependencies": {
-    "@rollup/plugin-multi-entry": "^6.0.1",
     "chalk": "^5.4.1",
     "esbuild": "^0.24.2",
     "minimatch": "^10.0.1",
-    "rollup": "^4.32.0",
-    "rollup-plugin-delete": "^2.1.0",
-    "rollup-plugin-dts": "^6.1.1",
     "typescript": "^5.7.3"
   },
   "packageManager": "yarn@4.4.1"
