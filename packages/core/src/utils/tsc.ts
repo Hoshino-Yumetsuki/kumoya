@@ -347,7 +347,9 @@ export class DtsBundler {
     return result.reverse();
   }
 
-  private normalizePath(path: string): string {
-    return path.replace(process.cwd(), ".");
+  private normalizePath(p: string): string {
+    // 转换为相对于根工作区的路径，并统一使用左斜杠
+    const relativePath = path.relative(process.cwd(), p).replace(/\\/g, "/");
+    return relativePath;
   }
 }
