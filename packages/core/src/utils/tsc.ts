@@ -11,8 +11,6 @@ interface DtsModule {
 }
 
 export class DtsBundler {
-  private typeCache: Map<string, string> = new Map();
-
   private parseDtsContent(filePath: string): DtsModule {
     const content = fs.readFileSync(filePath, "utf-8");
     const sourceFile = ts.createSourceFile(
@@ -119,7 +117,7 @@ export class DtsBundler {
     let result = content;
     const imports = new Set<string>();
 
-    // 收集所有导入声明和它们的位置
+    // 收集所有导入声明和位置
     const importNodes: {
       node: ts.ImportDeclaration;
       moduleSpecifier: string;
@@ -159,7 +157,6 @@ export class DtsBundler {
             .filter(([name]) => importedTypes.includes(name))
             .map(([_, node]) => {
               const text = node.getText();
-              // 确保导出声明从行首开始
               return text.replace(/^\s+/gm, "");
             })
             .join("\n");
@@ -180,8 +177,8 @@ export class DtsBundler {
     entryPoint?: string,
   ): Promise<void> {
     // 创建临时目录的绝对路径，确保使用相对路径作为输入
-    const tmpDirFull = path.isAbsolute(tmpDir) 
-      ? tmpDir 
+    const tmpDirFull = path.isAbsolute(tmpDir)
+      ? tmpDir
       : path.join(process.cwd(), tmpDir);
 
     // 读取所有声明文件
@@ -253,7 +250,6 @@ export class DtsBundler {
         true,
       );
 
-      // 使用 AST 遍历来保持正确的结构
       function visit(node: ts.Node) {
         if (ts.isInterfaceDeclaration(node) || ts.isClassDeclaration(node)) {
           const name = node.name?.text;
@@ -285,7 +281,6 @@ export class DtsBundler {
       .replace(/\s+/g, " ")
       .replace(/\s+$/, "");
 
-    // 仅在日志输出时格式化路径
     if (entryPoint) {
       logger.info(
         `${this.normalizePath(entryPoint)} ==> ${this.normalizePath(outputFile)}`,
@@ -296,7 +291,6 @@ export class DtsBundler {
       );
     }
 
-    // 使用原始路径进行文件操作
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, mergedContent);
   }
@@ -348,7 +342,6 @@ export class DtsBundler {
   }
 
   private normalizePath(p: string): string {
-    // 转换为相对于根工作区的路径，并统一使用左斜杠
     const relativePath = path.relative(process.cwd(), p).replace(/\\/g, "/");
     return relativePath;
   }

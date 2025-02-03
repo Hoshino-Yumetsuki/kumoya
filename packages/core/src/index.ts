@@ -34,16 +34,19 @@ async function main() {
       if (workspaceName) {
         const workspacePaths = workspace.getWorkspacePath(workspaceName);
         logger.info(`Found ${workspacePaths.length} matching workspaces`);
-        
+
         for (const workspacePath of workspacePaths) {
           // 检查是否为工作区
           if (!workspace.isWorkspace(workspacePath)) {
             // 如果不是工作区，获取其下的所有子工作区
-            const subWorkspaces = workspace.getWorkspaces('/' + workspacePath);
+            const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
             logger.info(`Building all workspaces under ${workspacePath}...`);
-            
+
             for (const subWorkspace of subWorkspaces) {
-              const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
+              const subConfig = await loadConfig(
+                "kumoya.config.mjs",
+                subWorkspace,
+              );
               logger.info(`Building workspace: ${subWorkspace}...`);
               const subBuilder = new Builder(subConfig);
               await subBuilder.build();
@@ -53,15 +56,20 @@ async function main() {
 
           // 如果是工作区，按原有逻辑处理
           const config = await loadConfig("kumoya.config.mjs", workspacePath);
-          const subWorkspaces = workspace.getWorkspaces('/' + workspacePath);
-          
+          const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
+
           if (subWorkspaces.length > 0) {
-            logger.info(`Building workspace ${workspacePath} and its subworkspaces...`);
+            logger.info(
+              `Building workspace ${workspacePath} and its subworkspaces...`,
+            );
             const builder = new Builder(config);
             await builder.build();
-            
+
             for (const subWorkspace of subWorkspaces) {
-              const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
+              const subConfig = await loadConfig(
+                "kumoya.config.mjs",
+                subWorkspace,
+              );
               logger.info(`Building subworkspace: ${subWorkspace}...`);
               const subBuilder = new Builder(subConfig);
               await subBuilder.build();

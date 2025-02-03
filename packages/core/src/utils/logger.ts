@@ -8,8 +8,14 @@ export class BuildError extends Error {
 }
 
 const prefix = chalk.cyan("kumoya");
+const isDebug = process.argv.includes("--debug");
 
 export const logger = {
+  debug: (message: string) => {
+    if (isDebug) {
+      console.log(`${prefix} ${message}`);
+    }
+  },
   info: (message: string) => {
     console.log(`${prefix} ${message}`);
   },
