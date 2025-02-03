@@ -10,7 +10,6 @@ async function main() {
   const command = args[0];
   const workspaceName = args[1];
 
-  // 初始化 Workspace
   const workspace = new Workspace(process.cwd());
   await workspace.initialize();
 
@@ -38,9 +37,7 @@ async function main() {
         logger.info(`Found ${workspacePaths.length} matching workspaces`);
 
         for (const workspacePath of workspacePaths) {
-          // 检查是否为工作区
           if (!workspace.isWorkspace(workspacePath)) {
-            // 如果不是工作区，获取其下的所有子工作区
             const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
             logger.info(`Building all workspaces under ${workspacePath}...`);
 
@@ -56,7 +53,6 @@ async function main() {
             continue;
           }
 
-          // 如果是工作区，按原有逻辑处理
           const config = await loadConfig("kumoya.config.mjs", workspacePath);
           const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
 
@@ -104,7 +100,6 @@ async function main() {
         throw new Error("Workspace name is required for publish command");
       }
 
-      // 收集所有额外的 npm 参数
       const npmArgs = args.slice(2);
       const npmCommand = ["npm", "publish", ...npmArgs].join(" ");
 
@@ -112,9 +107,7 @@ async function main() {
       logger.info(`Found ${workspacePaths.length} matching workspaces`);
 
       for (const workspacePath of workspacePaths) {
-        // 检查是否为工作区
         if (!workspace.isWorkspace(workspacePath)) {
-          // 如果不是工作区，获取其直接子工作区（不包括嵌套的）
           const directWorkspaces = workspace.getWorkspaces("/" + workspacePath);
           logger.info(`Publishing all workspaces under ${workspacePath}...`);
 
@@ -141,7 +134,6 @@ async function main() {
             }
           }
         } else {
-          // 如果是工作区，直接发布
           const publishPath = path.join(process.cwd(), workspacePath);
           logger.info(
             `Publishing workspace: ${workspacePath} with command: ${npmCommand}`,
