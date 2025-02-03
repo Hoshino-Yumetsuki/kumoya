@@ -175,14 +175,14 @@ export class DtsBundler {
   }
 
   public async bundleTypes(
+    tmpDir: string,
     outputFile: string,
     entryPoint?: string,
-    workspacePath?: string,
   ): Promise<void> {
-    const baseDir = workspacePath
-      ? path.join(process.cwd(), workspacePath)
-      : process.cwd();
-    const tmpDirFull = path.resolve(baseDir, ".kumoyatmp");
+    // 创建临时目录的绝对路径，确保使用相对路径作为输入
+    const tmpDirFull = path.isAbsolute(tmpDir) 
+      ? tmpDir 
+      : path.join(process.cwd(), tmpDir);
 
     // 读取所有声明文件
     const declarationFiles: string[] = [];
@@ -285,16 +285,18 @@ export class DtsBundler {
       .replace(/\s+/g, " ")
       .replace(/\s+$/, "");
 
+    // 仅在日志输出时格式化路径
     if (entryPoint) {
       logger.info(
-        `${path.posix.normalize(entryPoint)} ==> ${path.posix.normalize(outputFile)}`,
+        `${this.normalizePath(entryPoint)} ==> ${this.normalizePath(outputFile)}`,
       );
     } else {
       logger.info(
-        `${path.posix.normalize(tmpDirFull)} ==> ${path.posix.normalize(outputFile)}`,
+        `${this.normalizePath(tmpDirFull)} ==> ${this.normalizePath(outputFile)}`,
       );
     }
 
+    // 使用原始路径进行文件操作
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, mergedContent);
   }
@@ -343,5 +345,9 @@ export class DtsBundler {
     }
 
     return result.reverse();
+  }
+
+  private normalizePath(path: string): string {
+    return path.replace(process.cwd(), ".");
   }
 }
