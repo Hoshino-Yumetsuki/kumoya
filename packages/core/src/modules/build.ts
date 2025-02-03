@@ -105,7 +105,7 @@ export class Builder {
 
   private normalizePath(p: string): string {
     // 转换为相对于根工作区的路径，并统一使用左斜杠
-    const relativePath = path.relative(process.cwd(), p).replace(/\\/g, '/');
+    const relativePath = path.relative(process.cwd(), p).replace(/\\/g, "/");
     return relativePath;
   }
 
@@ -120,7 +120,7 @@ export class Builder {
       const extension = this.getOutputExtension(format);
       outputFile = path.join(
         this.config.outputFolder!,
-        `${path.parse(entry).name}${extension}`
+        `${path.parse(entry).name}${extension}`,
       );
     }
 
@@ -149,7 +149,7 @@ export class Builder {
       buildOptions.external = this.config.external;
 
     logger.info(
-      `${this.normalizePath(entry)} ==> ${this.normalizePath(outputFile)}`
+      `${this.normalizePath(entry)} ==> ${this.normalizePath(outputFile)}`,
     );
 
     await esbuild.build({

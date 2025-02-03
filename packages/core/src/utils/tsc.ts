@@ -39,14 +39,19 @@ export class DtsBundler {
         imports.add(moduleSpecifier);
       } else if (ts.isExportDeclaration(node)) {
         if (node.exportClause && ts.isNamedExports(node.exportClause)) {
-          node.exportClause.elements.forEach(element => {
+          node.exportClause.elements.forEach((element) => {
             exports.set(element.name.text, element);
           });
         }
-      } else if (ts.isExportAssignment(node) || 
-                 ts.isExportDeclaration(node) ||
-                 ((ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node) || ts.isFunctionDeclaration(node) || ts.isTypeAliasDeclaration(node)) && 
-                  node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword))) {
+      } else if (
+        ts.isExportAssignment(node) ||
+        ts.isExportDeclaration(node) ||
+        ((ts.isClassDeclaration(node) ||
+          ts.isInterfaceDeclaration(node) ||
+          ts.isFunctionDeclaration(node) ||
+          ts.isTypeAliasDeclaration(node)) &&
+          node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword))
+      ) {
         const name = (node as any).name?.text;
         if (name) {
           exports.set(name, node);
@@ -99,23 +104,32 @@ export class DtsBundler {
     return cycles;
   }
 
-  private async resolveImports(filePath: string, content: string, modules: Map<string, DtsModule>): Promise<string> {
+  private async resolveImports(
+    filePath: string,
+    content: string,
+    modules: Map<string, DtsModule>,
+  ): Promise<string> {
     const sourceFile = ts.createSourceFile(
       filePath,
       content,
       ts.ScriptTarget.Latest,
-      true
+      true,
     );
 
     let result = content;
     const imports = new Set<string>();
 
     // 收集所有导入声明和它们的位置
-    const importNodes: { node: ts.ImportDeclaration; moduleSpecifier: string }[] = [];
-    ts.forEachChild(sourceFile, node => {
+    const importNodes: {
+      node: ts.ImportDeclaration;
+      moduleSpecifier: string;
+    }[] = [];
+    ts.forEachChild(sourceFile, (node) => {
       if (ts.isImportDeclaration(node)) {
-        const moduleSpecifier = node.moduleSpecifier.getText().replace(/['"]/g, '');
-        if (moduleSpecifier.startsWith('.')) {
+        const moduleSpecifier = node.moduleSpecifier
+          .getText()
+          .replace(/['"]/g, "");
+        if (moduleSpecifier.startsWith(".")) {
           importNodes.push({ node, moduleSpecifier });
           imports.add(moduleSpecifier);
         }
@@ -124,20 +138,31 @@ export class DtsBundler {
 
     // 处理每个导入
     for (const { node, moduleSpecifier } of importNodes) {
-      const resolvedPath = path.resolve(path.dirname(filePath), moduleSpecifier + '.d.ts');
+      const resolvedPath = path.resolve(
+        path.dirname(filePath),
+        moduleSpecifier + ".d.ts",
+      );
       const importedModule = modules.get(resolvedPath);
-      
+
       if (importedModule) {
-        // 提取导入的类型名称
         const importClause = node.importClause;
-        if (importClause?.namedBindings && ts.isNamedImports(importClause.namedBindings)) {
-          const importedTypes = importClause.namedBindings.elements.map(e => e.name.text);
-          
-          // 从导入模块中提取相应的类型声明
+        if (
+          importClause?.namedBindings &&
+          ts.isNamedImports(importClause.namedBindings)
+        ) {
+          const importedTypes = importClause.namedBindings.elements.map(
+            (e) => e.name.text,
+          );
+
+          // 从导入模块中提取相应的类型声明并确保正确的格式
           const typeDeclarations = Array.from(importedModule.exports.entries())
             .filter(([name]) => importedTypes.includes(name))
-            .map(([_, node]) => node.getText())
-            .join('\n');
+            .map(([_, node]) => {
+              const text = node.getText();
+              // 确保导出声明从行首开始
+              return text.replace(/^\s+/gm, "");
+            })
+            .join("\n");
 
           // 替换导入语句为实际的类型声明
           const importStatement = node.getText();
@@ -150,7 +175,6 @@ export class DtsBundler {
   }
 
   public async bundleTypes(
-    tmpDir: string,
     outputFile: string,
     entryPoint?: string,
     workspacePath?: string,
@@ -201,7 +225,9 @@ export class DtsBundler {
     // 检测并处理循环依赖
     const cycles = this.detectCycles(graph);
     for (const cycle of cycles) {
-      logger.warn(`Detected circular dependency in files: ${Array.from(cycle).join(' -> ')}`);
+      logger.warn(
+        `Detected circular dependency in files: ${Array.from(cycle).join(" -> ")}`,
+      );
       // 将循环依赖中的所有类型声明合并到一个文件中
       this.mergeCircularDependencies(cycle, modules);
     }
@@ -214,13 +240,17 @@ export class DtsBundler {
 
     for (const file of sorted) {
       const module = modules.get(file)!;
-      const processedContent = await this.resolveImports(file, module.content, modules);
-      
+      const processedContent = await this.resolveImports(
+        file,
+        module.content,
+        modules,
+      );
+
       const sourceFile = ts.createSourceFile(
         file,
         processedContent,
         ts.ScriptTarget.Latest,
-        true
+        true,
       );
 
       // 使用 AST 遍历来保持正确的结构
@@ -231,7 +261,10 @@ export class DtsBundler {
             seenExports.add(name);
             mergedContent += node.getText() + "\n\n";
           }
-        } else if (ts.isTypeAliasDeclaration(node) || ts.isFunctionDeclaration(node)) {
+        } else if (
+          ts.isTypeAliasDeclaration(node) ||
+          ts.isFunctionDeclaration(node)
+        ) {
           const name = node.name?.text;
           if (name && !seenExports.has(name)) {
             seenExports.add(name);
@@ -245,10 +278,12 @@ export class DtsBundler {
       ts.forEachChild(sourceFile, visit);
     }
 
-    // 清理和格式化
     mergedContent = mergedContent
-      .replace(/\n{3,}/g, "\n\n")
-      .trim() + "\n";
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/\s*([{};,])\s*/g, "$1")
+      .replace(/\s+/g, " ")
+      .replace(/\s+$/, "");
 
     if (entryPoint) {
       logger.info(
@@ -264,11 +299,14 @@ export class DtsBundler {
     fs.writeFileSync(outputFile, mergedContent);
   }
 
-  private mergeCircularDependencies(cycle: Set<string>, modules: Map<string, DtsModule>) {
+  private mergeCircularDependencies(
+    cycle: Set<string>,
+    modules: Map<string, DtsModule>,
+  ) {
     // 将循环依赖中的所有类型声明合并到第一个文件中
     const [first, ...rest] = Array.from(cycle);
     const firstModule = modules.get(first)!;
-    
+
     for (const file of rest) {
       const module = modules.get(file)!;
       // 合并导出
@@ -278,13 +316,16 @@ export class DtsBundler {
         }
       });
       // 合并导入
-      module.imports.forEach(imp => firstModule.imports.add(imp));
+      module.imports.forEach((imp) => firstModule.imports.add(imp));
       // 移除其他文件的声明
       modules.delete(file);
     }
   }
 
-  private topologicalSort(graph: Map<string, Set<string>>, cycles: Set<string>[]): string[] {
+  private topologicalSort(
+    graph: Map<string, Set<string>>,
+    _cycles: Set<string>[],
+  ): string[] {
     const visited = new Set<string>();
     const result: string[] = [];
 
