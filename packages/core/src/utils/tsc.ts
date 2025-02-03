@@ -6,11 +6,13 @@ import { logger } from "./logger";
 interface DtsModule {
   content: string;
   imports: Set<string>;
-  exports: Set<string>;
+  exports: Map<string, ts.Node>;
   references: string[];
 }
 
 export class DtsBundler {
+  private typeCache: Map<string, string> = new Map();
+
   private parseDtsContent(filePath: string): DtsModule {
     const content = fs.readFileSync(filePath, "utf-8");
     const sourceFile = ts.createSourceFile(
@@ -21,7 +23,7 @@ export class DtsBundler {
     );
 
     const imports = new Set<string>();
-    const exports = new Set<string>();
+    const exports = new Map<string, ts.Node>();
     const references = [];
 
     const tripleSlashRefs = sourceFile.referencedFiles.map(
@@ -36,11 +38,18 @@ export class DtsBundler {
           .replace(/['"]/g, "");
         imports.add(moduleSpecifier);
       } else if (ts.isExportDeclaration(node)) {
-        if (node.moduleSpecifier) {
-          const moduleSpecifier = node.moduleSpecifier
-            .getText()
-            .replace(/['"]/g, "");
-          exports.add(moduleSpecifier);
+        if (node.exportClause && ts.isNamedExports(node.exportClause)) {
+          node.exportClause.elements.forEach(element => {
+            exports.set(element.name.text, element);
+          });
+        }
+      } else if (ts.isExportAssignment(node) || 
+                 ts.isExportDeclaration(node) ||
+                 ((ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node) || ts.isFunctionDeclaration(node) || ts.isTypeAliasDeclaration(node)) && 
+                  node.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword))) {
+        const name = (node as any).name?.text;
+        if (name) {
+          exports.set(name, node);
         }
       }
       ts.forEachChild(node, visit);
@@ -53,6 +62,91 @@ export class DtsBundler {
       exports,
       references,
     };
+  }
+
+  private detectCycles(graph: Map<string, Set<string>>): Set<string>[] {
+    const cycles: Set<string>[] = [];
+    const visited = new Set<string>();
+    const stack = new Set<string>();
+
+    function dfs(node: string, path: string[]) {
+      if (stack.has(node)) {
+        const cycleStart = path.indexOf(node);
+        cycles.push(new Set(path.slice(cycleStart)));
+        return;
+      }
+      if (visited.has(node)) return;
+
+      visited.add(node);
+      stack.add(node);
+      path.push(node);
+
+      const neighbors = graph.get(node) || new Set();
+      for (const neighbor of neighbors) {
+        dfs(neighbor, [...path]);
+      }
+
+      stack.delete(node);
+      path.pop();
+    }
+
+    for (const node of graph.keys()) {
+      if (!visited.has(node)) {
+        dfs(node, []);
+      }
+    }
+
+    return cycles;
+  }
+
+  private async resolveImports(filePath: string, content: string, modules: Map<string, DtsModule>): Promise<string> {
+    const sourceFile = ts.createSourceFile(
+      filePath,
+      content,
+      ts.ScriptTarget.Latest,
+      true
+    );
+
+    let result = content;
+    const imports = new Set<string>();
+
+    // 收集所有导入声明和它们的位置
+    const importNodes: { node: ts.ImportDeclaration; moduleSpecifier: string }[] = [];
+    ts.forEachChild(sourceFile, node => {
+      if (ts.isImportDeclaration(node)) {
+        const moduleSpecifier = node.moduleSpecifier.getText().replace(/['"]/g, '');
+        if (moduleSpecifier.startsWith('.')) {
+          importNodes.push({ node, moduleSpecifier });
+          imports.add(moduleSpecifier);
+        }
+      }
+    });
+
+    // 处理每个导入
+    for (const { node, moduleSpecifier } of importNodes) {
+      const resolvedPath = path.resolve(path.dirname(filePath), moduleSpecifier + '.d.ts');
+      const importedModule = modules.get(resolvedPath);
+      
+      if (importedModule) {
+        // 提取导入的类型名称
+        const importClause = node.importClause;
+        if (importClause?.namedBindings && ts.isNamedImports(importClause.namedBindings)) {
+          const importedTypes = importClause.namedBindings.elements.map(e => e.name.text);
+          
+          // 从导入模块中提取相应的类型声明
+          const typeDeclarations = Array.from(importedModule.exports.entries())
+            .filter(([name]) => importedTypes.includes(name))
+            .map(([_, node]) => node.getText())
+            .join('\n');
+
+          // 替换导入语句为实际的类型声明
+          const importStatement = node.getText();
+          result = result.replace(importStatement, typeDeclarations);
+        }
+      }
+    }
+
+    return result;
   }
 
   public async bundleTypes(
@@ -104,45 +198,57 @@ export class DtsBundler {
       });
     });
 
-    const visited = new Set<string>();
-    const sorted: string[] = [];
-
-    function visit(file: string) {
-      if (visited.has(file)) return;
-      visited.add(file);
-      const dependencies = graph.get(file) || new Set();
-      for (const dep of dependencies) {
-        visit(dep);
-      }
-      sorted.push(file);
+    // 检测并处理循环依赖
+    const cycles = this.detectCycles(graph);
+    for (const cycle of cycles) {
+      logger.warn(`Detected circular dependency in files: ${Array.from(cycle).join(' -> ')}`);
+      // 将循环依赖中的所有类型声明合并到一个文件中
+      this.mergeCircularDependencies(cycle, modules);
     }
 
-    declarationFiles.forEach((file) => visit(file));
+    // 修改拓扑排序的处理逻辑
+    const sorted = this.topologicalSort(graph, cycles);
 
     const seenExports = new Set<string>();
     let mergedContent = "";
 
     for (const file of sorted) {
       const module = modules.get(file)!;
-      const lines = module.content.split("\n");
+      const processedContent = await this.resolveImports(file, module.content, modules);
+      
+      const sourceFile = ts.createSourceFile(
+        file,
+        processedContent,
+        ts.ScriptTarget.Latest,
+        true
+      );
 
-      const filteredLines = lines.filter((line) => {
-        if (line.trim().startsWith("export")) {
-          const exportName = line.match(
-            /export\s+(?:type|interface|class|enum|const|function)?\s+(\w+)/,
-          )?.[1];
-          if (exportName) {
-            if (seenExports.has(exportName)) {
-              return false;
-            }
-            seenExports.add(exportName);
+      // 使用 AST 遍历来保持正确的结构
+      function visit(node: ts.Node) {
+        if (ts.isInterfaceDeclaration(node) || ts.isClassDeclaration(node)) {
+          const name = node.name?.text;
+          if (name && !seenExports.has(name)) {
+            seenExports.add(name);
+            mergedContent += node.getText() + "\n\n";
+          }
+        } else if (ts.isTypeAliasDeclaration(node) || ts.isFunctionDeclaration(node)) {
+          const name = node.name?.text;
+          if (name && !seenExports.has(name)) {
+            seenExports.add(name);
+            mergedContent += node.getText() + "\n\n";
           }
         }
-        return true;
-      });
 
-      mergedContent += filteredLines.join("\n") + "\n";
+        ts.forEachChild(node, visit);
+      }
+
+      ts.forEachChild(sourceFile, visit);
     }
+
+    // 清理和格式化
+    mergedContent = mergedContent
+      .replace(/\n{3,}/g, "\n\n")
+      .trim() + "\n";
 
     if (entryPoint) {
       logger.info(
@@ -156,5 +262,45 @@ export class DtsBundler {
 
     fs.mkdirSync(path.dirname(outputFile), { recursive: true });
     fs.writeFileSync(outputFile, mergedContent);
+  }
+
+  private mergeCircularDependencies(cycle: Set<string>, modules: Map<string, DtsModule>) {
+    // 将循环依赖中的所有类型声明合并到第一个文件中
+    const [first, ...rest] = Array.from(cycle);
+    const firstModule = modules.get(first)!;
+    
+    for (const file of rest) {
+      const module = modules.get(file)!;
+      // 合并导出
+      module.exports.forEach((node, name) => {
+        if (!firstModule.exports.has(name)) {
+          firstModule.exports.set(name, node);
+        }
+      });
+      // 合并导入
+      module.imports.forEach(imp => firstModule.imports.add(imp));
+      // 移除其他文件的声明
+      modules.delete(file);
+    }
+  }
+
+  private topologicalSort(graph: Map<string, Set<string>>, cycles: Set<string>[]): string[] {
+    const visited = new Set<string>();
+    const result: string[] = [];
+
+    function visit(node: string) {
+      if (visited.has(node)) return;
+      visited.add(node);
+      for (const dep of graph.get(node) || []) {
+        visit(dep);
+      }
+      result.push(node);
+    }
+
+    for (const node of graph.keys()) {
+      visit(node);
+    }
+
+    return result.reverse();
   }
 }
