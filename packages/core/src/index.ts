@@ -31,17 +31,48 @@ async function main() {
 
   if (command === "build") {
     try {
-      const workspacePath = workspaceName
-        ? workspace.getWorkspacePath(workspaceName)
-        : undefined;
-      const config = await loadConfig("kumoya.config.mjs", workspacePath);
-
       if (workspaceName) {
-        logger.info(`Building workspace ${workspaceName}...`);
-        const builder = new Builder(config);
-        await builder.build();
+        try {
+          const workspacePath = workspace.getWorkspacePath(workspaceName);
+          const config = await loadConfig("kumoya.config.mjs", workspacePath);
+          const subWorkspaces = workspace.getWorkspaces('/' + workspacePath);
+          
+          if (subWorkspaces.length > 0) {
+            logger.info(`Building workspace ${workspaceName} and its subworkspaces...`);
+            const builder = new Builder(config);
+            await builder.build();
+            
+            for (const subWorkspace of subWorkspaces) {
+              const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
+              logger.info(`Building subworkspace: ${subWorkspace}...`);
+              const subBuilder = new Builder(subConfig);
+              await subBuilder.build();
+            }
+          } else {
+            logger.info(`Building workspace ${workspaceName}...`);
+            const builder = new Builder(config);
+            await builder.build();
+          }
+        } catch (error) {
+          if (error.message.includes("Ambiguous workspace")) {
+            // 处理多个匹配的情况
+            const matches = error.message.match(/: (.+)$/)[1].split(", ");
+            logger.info(`Building multiple matching workspaces...`);
+            
+            for (const match of matches) {
+              const relativePath = match.substring(1); // 移除开头的 '/'
+              const config = await loadConfig("kumoya.config.mjs", relativePath);
+              logger.info(`Building workspace: ${relativePath}...`);
+              const builder = new Builder(config);
+              await builder.build();
+            }
+          } else {
+            throw error;
+          }
+        }
       } else {
         logger.info("Building root workspace...");
+        const config = await loadConfig();
         const builder = new Builder(config);
         await builder.build();
       }

@@ -65,6 +65,16 @@ export class Workspace {
     );
   }
 
+  getWorkspaces(basePath: string = ''): string[] {
+    
+    return Object.entries(this.workspaces)
+      .filter(([folder, pkg]) => {
+        if (!basePath) return folder !== '';
+        return folder.startsWith(basePath) && folder !== basePath;
+      })
+      .map(([_, pkg]) => pkg.relativePath);
+  }
+
   getWorkspacePath(name: string): string {
     logger.info(`Looking for workspace: ${name}`);
     logger.info(
@@ -76,7 +86,8 @@ export class Workspace {
       return (
         pkg.name === name ||
         (pkg.relativePath && pkg.relativePath.split("/").pop() === name) ||
-        (folder === "" && name === ".")
+        (folder === "" && name === ".") ||
+        (folder.startsWith("/" + name) && folder !== "/" + name)
       );
     });
 
