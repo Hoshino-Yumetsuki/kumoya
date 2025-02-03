@@ -27,7 +27,10 @@ export class Workspace {
     );
 
     if (!rootPkg.workspaces) {
-      throw new Error("No workspaces defined in package.json");
+      logger.debug('No workspaces defined, treating as single workspace');
+      rootPkg.relativePath = '';
+      this.workspaces = { '': rootPkg };
+      return;
     }
 
     const workspacePatterns = rootPkg.workspaces.map((pattern) =>
