@@ -65,17 +65,43 @@ export class Workspace {
     );
   }
 
+  isWorkspace(path: string): boolean {
+    return Object.values(this.workspaces).some(pkg => 
+      pkg.relativePath === path || 
+      ('/' + pkg.relativePath) === path
+    );
+  }
+
   getWorkspaces(basePath: string = ''): string[] {
+    logger.info(`Getting all workspaces under: ${basePath}`);
     
+    // 如果basePath不是工作区，直接返回其下的所有子工作区
+    if (basePath && !this.isWorkspace(basePath)) {
+      return Object.entries(this.workspaces)
+        .filter(([folder, pkg]) => {
+          const relativePath = folder.slice(1); // 移除开头的 '/'
+          return relativePath.startsWith(basePath.slice(1));
+        })
+        .map(([_, pkg]) => pkg.relativePath);
+    }
+    
+    // 如果是工作区，只返回直接子工作区
     return Object.entries(this.workspaces)
       .filter(([folder, pkg]) => {
         if (!basePath) return folder !== '';
-        return folder.startsWith(basePath) && folder !== basePath;
+        
+        const relativePath = folder.slice(1);
+        const baseDir = basePath.slice(1);
+        
+        if (!relativePath.startsWith(baseDir)) return false;
+        
+        const remainingPath = relativePath.slice(baseDir.length);
+        return remainingPath.startsWith('/') && !remainingPath.slice(1).includes('/');
       })
       .map(([_, pkg]) => pkg.relativePath);
   }
 
-  getWorkspacePath(name: string): string {
+  getWorkspacePath(name: string): string[] {
     logger.info(`Looking for workspace: ${name}`);
     logger.info(
       `Available workspaces: ${JSON.stringify(Object.values(this.workspaces).map((pkg) => pkg.name))}`,
@@ -83,22 +109,26 @@ export class Workspace {
 
     const targets = Object.keys(this.workspaces).filter((folder) => {
       const pkg = this.workspaces[folder];
+      const folderName = pkg.relativePath?.split("/").pop();
+      
       return (
         pkg.name === name ||
-        (pkg.relativePath && pkg.relativePath.split("/").pop() === name) ||
         (folder === "" && name === ".") ||
-        (folder.startsWith("/" + name) && folder !== "/" + name)
+        (folderName === name) ||
+        (folder === "/" + name)
       );
     });
 
     logger.info(`Found matching workspaces: ${JSON.stringify(targets)}`);
 
     if (!targets.length) {
+      // 如果没找到工作区且名称是文件夹路径，直接返回该路径
+      if (name.includes('/') || name === 'packages') {
+        return [name];
+      }
       throw new Error(`Cannot find workspace "${name}"`);
-    } else if (targets.length > 1) {
-      throw new Error(`Ambiguous workspace "${name}": ${targets.join(", ")}`);
     }
 
-    return this.workspaces[targets[0]].relativePath || "";
+    return targets.map(target => this.workspaces[target].relativePath || "");
   }
 }

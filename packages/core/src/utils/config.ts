@@ -19,22 +19,47 @@ export async function loadConfig(
   }
 
   try {
-    const configUrl = pathToFileURL(fullPath).href;
-    const config = await import(configUrl);
+    // 先尝试从指定路径加载配置
+    try {
+      const configUrl = pathToFileURL(fullPath).href;
+      const config = await import(configUrl);
+      
+      if (!config.kumoyaConfig) {
+        throw new BuildError("kumoyaConfig is required in config file");
+      }
 
-    if (!config.kumoyaConfig) {
-      throw new BuildError("kumoyaConfig is required in config file");
+      if (!config.kumoyaConfig.entry) {
+        throw new BuildError("entry is required in kumoyaConfig");
+      }
+
+      return {
+        kumoyaConfig: validateKumoyaConfig(config.kumoyaConfig),
+        esbuildConfig: config.esbuildConfig,
+        root: workspacePath,
+      };
+    } catch (error) {
+      // 如果从指定路径加载失败，尝试从根目录加载
+      if (workspacePath) {
+        const rootConfigPath = path.resolve(process.cwd(), configPath);
+        const rootConfigUrl = pathToFileURL(rootConfigPath).href;
+        const config = await import(rootConfigUrl);
+
+        if (!config.kumoyaConfig) {
+          throw new BuildError("kumoyaConfig is required in config file");
+        }
+
+        if (!config.kumoyaConfig.entry) {
+          throw new BuildError("entry is required in kumoyaConfig");
+        }
+
+        return {
+          kumoyaConfig: validateKumoyaConfig(config.kumoyaConfig),
+          esbuildConfig: config.esbuildConfig,
+          root: workspacePath,
+        };
+      }
+      throw error;
     }
-
-    if (!config.kumoyaConfig.entry) {
-      throw new BuildError("entry is required in kumoyaConfig");
-    }
-
-    return {
-      kumoyaConfig: validateKumoyaConfig(config.kumoyaConfig),
-      esbuildConfig: config.esbuildConfig,
-      root: workspacePath,
-    };
   } catch (error) {
     if (error instanceof BuildError) {
       throw error;
