@@ -182,105 +182,62 @@ export class Builder {
   }
 
   private async buildTypes() {
-    const tmpDir = path.join(process.cwd(), ".kumoyatmp").replace(/\\/g, "/");
-    const entryDirs = this.getEntryDirs();
-    const dirs = Object.keys(entryDirs);
     const dtsBundler = new DtsBundler();
 
-    try {
-      if (this.config.bundle) {
-        // 解析 tsconfig.json
-        const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
-        const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
-        const parsedConfig = ts.parseJsonConfigFileContent(
-          configFile.config,
-          ts.sys,
-          path.dirname(tsConfigPath),
-        );
+    if (this.config.bundle) {
+      const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
+      const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
+      const parsedConfig = ts.parseJsonConfigFileContent(
+        configFile.config,
+        ts.sys,
+        path.dirname(tsConfigPath),
+      );
 
-        // 创建编译选项
-        const compilerOptions: ts.CompilerOptions = {
+      const compilerOptions: ts.CompilerOptions = {
+        ...parsedConfig.options,
+        declaration: true,
+        emitDeclarationOnly: true,
+        noEmit: false,
+      };
+
+      const entries = Array.isArray(this.config.entry)
+        ? this.config.entry
+        : [this.config.entry];
+
+      for (const entry of entries) {
+        const entryName = path.parse(entry).name;
+        const finalOutputDir = this.config.outfile
+          ? path.dirname(this.config.outfile)
+          : this.config.outputFolder!;
+        const outputFile = path
+          .join(finalOutputDir, `${entryName}.d.ts`)
+          .replace(/\\/g, "/");
+
+        const program = ts.createProgram([entry], compilerOptions);
+        await dtsBundler.bundleTypes(program, outputFile, entry);
+      }
+    } else {
+      const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
+      const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
+      const parsedConfig = ts.parseJsonConfigFileContent(
+        configFile.config,
+        ts.sys,
+        path.dirname(tsConfigPath),
+      );
+
+      const program = ts.createProgram(
+        Array.isArray(this.config.entry)
+          ? this.config.entry
+          : [this.config.entry],
+        {
           ...parsedConfig.options,
           declaration: true,
           emitDeclarationOnly: true,
           noEmit: false,
-        };
-
-        if (
-          dirs.length === 1 &&
-          (this.isInTsConfig(dirs[0]) || parsedConfig.options.rootDir)
-        ) {
-          const rootDir = parsedConfig.options.rootDir || dirs[0];
-          const program = ts.createProgram(
-            Array.isArray(this.config.entry)
-              ? this.config.entry
-              : [this.config.entry],
-            {
-              ...compilerOptions,
-              rootDir,
-              outDir: tmpDir,
-            },
-          );
-          program.emit();
-        } else {
-          for (const dir of dirs) {
-            const dirTmpPath = path.join(tmpDir, path.basename(dir));
-            const program = ts.createProgram(entryDirs[dir], {
-              ...compilerOptions,
-              rootDir: dir,
-              outDir: dirTmpPath,
-            });
-            program.emit();
-          }
-        }
-
-        const entries = Array.isArray(this.config.entry)
-          ? this.config.entry
-          : [this.config.entry];
-
-        for (const entry of entries) {
-          const entryName = path.parse(entry).name;
-          const finalOutputDir = this.config.outfile
-            ? path.dirname(this.config.outfile)
-            : this.config.outputFolder!;
-          const outputFile = path
-            .join(finalOutputDir, `${entryName}.d.ts`)
-            .replace(/\\/g, "/");
-
-          await dtsBundler.bundleTypes(tmpDir, outputFile, entry);
-        }
-
-        if (fs.existsSync(tmpDir)) {
-          fs.rmSync(tmpDir, { recursive: true, force: true });
-        }
-      } else {
-        const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
-        const configFile = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
-        const parsedConfig = ts.parseJsonConfigFileContent(
-          configFile.config,
-          ts.sys,
-          path.dirname(tsConfigPath),
-        );
-
-        const program = ts.createProgram(
-          Array.isArray(this.config.entry)
-            ? this.config.entry
-            : [this.config.entry],
-          {
-            ...parsedConfig.options,
-            declaration: true,
-            emitDeclarationOnly: true,
-            noEmit: false,
-            outDir: this.config.outputFolder,
-          },
-        );
-        program.emit();
-      }
-    } catch (error) {
-      if (fs.existsSync(tmpDir)) {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-      }
-      throw error;
+          outDir: this.config.outputFolder,
+        },
+      );
+      program.emit();
     }
   }
 

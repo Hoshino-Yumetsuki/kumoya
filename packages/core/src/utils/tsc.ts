@@ -10,12 +10,36 @@ interface DtsModule {
   references: string[];
 }
 
+interface VirtualFileSystem {
+  files: Map<string, string>;
+  writeFile(path: string, content: string): void;
+  readFile(path: string): string;
+  exists(path: string): boolean;
+}
+
 export class DtsBundler {
-  private parseDtsContent(filePath: string): DtsModule {
-    const content = fs.readFileSync(filePath, "utf-8");
+  private vfs: VirtualFileSystem = {
+    files: new Map<string, string>(),
+    writeFile(path: string, content: string) {
+      this.files.set(path, content);
+    },
+    readFile(path: string) {
+      const content = this.files.get(path);
+      if (content === undefined) {
+        throw new Error(`File not found: ${path}`);
+      }
+      return content;
+    },
+    exists(path: string) {
+      return this.files.has(path);
+    },
+  };
+
+  private parseDtsContent(filePath: string, content?: string): DtsModule {
+    const fileContent = content ?? fs.readFileSync(filePath, "utf-8");
     const sourceFile = ts.createSourceFile(
       filePath,
-      content,
+      fileContent,
       ts.ScriptTarget.Latest,
       true,
     );
@@ -60,7 +84,7 @@ export class DtsBundler {
     visit(sourceFile);
 
     return {
-      content,
+      content: fileContent,
       imports,
       exports,
       references,
@@ -172,34 +196,22 @@ export class DtsBundler {
   }
 
   public async bundleTypes(
-    tmpDir: string,
+    program: ts.Program,
     outputFile: string,
     entryPoint?: string,
   ): Promise<void> {
-    // 创建临时目录的绝对路径，确保使用相对路径作为输入
-    const tmpDirFull = path.isAbsolute(tmpDir)
-      ? tmpDir
-      : path.join(process.cwd(), tmpDir);
-
-    // 读取所有声明文件
-    const declarationFiles: string[] = [];
-    const readDtsFiles = (dir: string) => {
-      const files = fs.readdirSync(dir);
-      for (const file of files) {
-        const fullPath = path.join(dir, file);
-        const stat = fs.statSync(fullPath);
-        if (stat.isDirectory()) {
-          readDtsFiles(fullPath);
-        } else if (file.endsWith(".d.ts")) {
-          declarationFiles.push(fullPath);
-        }
+    // 使用 program.emit 将声明文件写入虚拟文件系统
+    program.emit(undefined, (fileName: string, data: string) => {
+      if (fileName.endsWith(".d.ts")) {
+        this.vfs.writeFile(fileName, data);
       }
-    };
-    readDtsFiles(tmpDirFull);
+    });
 
+    const declarationFiles = Array.from(this.vfs.files.keys());
     const modules = new Map<string, DtsModule>();
+
     for (const file of declarationFiles) {
-      modules.set(file, this.parseDtsContent(file));
+      modules.set(file, this.parseDtsContent(file, this.vfs.readFile(file)));
     }
 
     const graph = new Map<string, Set<string>>();
@@ -287,7 +299,9 @@ export class DtsBundler {
       );
     } else {
       logger.info(
-        `${this.normalizePath(tmpDirFull)} ==> ${this.normalizePath(outputFile)}`,
+        `${this.normalizePath(
+          path.join(process.cwd(), ...declarationFiles),
+        ).replace(/\\/g, "/")} ==> ${this.normalizePath(outputFile)}`,
       );
     }
 
