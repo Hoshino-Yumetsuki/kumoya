@@ -3,21 +3,46 @@ import * as path from "path";
 import { BuilderOptions, KumoyaConfig } from "../types";
 import * as fs from "fs";
 import { minimatch } from "minimatch";
-import { BuildError, logger } from "./logger";
-import { DtsBundler } from "./tsc";
+import { BuildError, logger } from "../utils/logger";
+import { DtsBundler } from "../utils/tsc";
 import * as ts from "typescript";
 
 export class Builder {
   private config: KumoyaConfig;
   private esbuildConfig: any;
   private tsConfig: any;
+  private workingDir: string;
 
   constructor(options: BuilderOptions) {
+    this.workingDir = options.root
+      ? path.join(process.cwd(), options.root)
+      : process.cwd();
     this.config = {
       platform: "node",
       format: "cjs",
       ...options.kumoyaConfig,
     } as KumoyaConfig;
+
+    // 调整入口点路径
+    if (this.config.entry) {
+      const entries = Array.isArray(this.config.entry)
+        ? this.config.entry
+        : [this.config.entry];
+      this.config.entry = entries.map((entry) =>
+        path.join(this.workingDir, entry),
+      );
+    }
+
+    // 调整输出路径
+    if (this.config.outputFolder) {
+      this.config.outputFolder = path.join(
+        this.workingDir,
+        this.config.outputFolder,
+      );
+    }
+    if (this.config.outfile) {
+      this.config.outfile = path.join(this.workingDir, this.config.outfile);
+    }
 
     if (
       this.config.format === "both" &&
@@ -44,7 +69,7 @@ export class Builder {
     }
 
     try {
-      const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
+      const tsConfigPath = path.join(this.workingDir, "tsconfig.json");
       this.tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, "utf-8"));
 
       if (!this.config.target) {

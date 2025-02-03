@@ -1,7 +1,7 @@
 import { KumoyaConfig } from "../types";
 import * as fs from "fs";
 import * as path from "path";
-import { logger } from "./logger";
+import { logger } from "../utils/logger";
 
 export const defaultConfig = `export const kumoyaConfig = {
   entry: './src/index.ts',

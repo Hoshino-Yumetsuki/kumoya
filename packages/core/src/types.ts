@@ -20,4 +20,5 @@ export interface BuilderOptions {
   kumoyaConfig?: KumoyaConfig;
   esbuildConfig?: any;
   rollupConfig?: any;
+  root?: string;
 }

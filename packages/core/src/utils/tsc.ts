@@ -59,7 +59,13 @@ export class DtsBundler {
     tmpDir: string,
     outputFile: string,
     entryPoint?: string,
+    workspacePath?: string,
   ): Promise<void> {
+    const baseDir = workspacePath
+      ? path.join(process.cwd(), workspacePath)
+      : process.cwd();
+    const tmpDirFull = path.resolve(baseDir, ".kumoyatmp");
+
     // 读取所有声明文件
     const declarationFiles: string[] = [];
     const readDtsFiles = (dir: string) => {
@@ -74,7 +80,7 @@ export class DtsBundler {
         }
       }
     };
-    readDtsFiles(tmpDir);
+    readDtsFiles(tmpDirFull);
 
     const modules = new Map<string, DtsModule>();
     for (const file of declarationFiles) {
@@ -144,7 +150,7 @@ export class DtsBundler {
       );
     } else {
       logger.info(
-        `${path.posix.normalize(tmpDir)} ==> ${path.posix.normalize(outputFile)}`,
+        `${path.posix.normalize(tmpDirFull)} ==> ${path.posix.normalize(outputFile)}`,
       );
     }
 

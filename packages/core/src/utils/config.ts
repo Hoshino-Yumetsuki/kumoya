@@ -2,12 +2,16 @@ import { BuilderOptions } from "../types";
 import * as path from "path";
 import { BuildError } from "./logger";
 import { pathToFileURL } from "url";
-import { validateKumoyaConfig, initializeConfig } from "./init";
+import { validateKumoyaConfig, initializeConfig } from "../modules/init";
 
 export async function loadConfig(
   configPath: string = "kumoya.config.mjs",
+  workspacePath?: string,
 ): Promise<BuilderOptions> {
-  const fullPath = path.resolve(process.cwd(), configPath);
+  const basePath = workspacePath
+    ? path.join(process.cwd(), workspacePath)
+    : process.cwd();
+  const fullPath = path.resolve(basePath, configPath);
 
   const isNewConfig = initializeConfig(configPath);
   if (isNewConfig) {
@@ -29,6 +33,7 @@ export async function loadConfig(
     return {
       kumoyaConfig: validateKumoyaConfig(config.kumoyaConfig),
       esbuildConfig: config.esbuildConfig,
+      root: workspacePath,
     };
   } catch (error) {
     if (error instanceof BuildError) {

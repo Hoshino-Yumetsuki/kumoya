@@ -1,0 +1,47 @@
+{
+  "name": "kumoya",
+  "version": "1.2.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": "./dist/index.mjs",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "workspace",
+    "cli",
+    "script",
+    "build"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hoshino-Yumetsuki/kumoya.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hoshino-Yumetsuki/kumoya/issues"
+  },
+  "homepage": "https://github.com/Hoshino-Yumetsuki/kumoya",
+  "scripts": {
+    "lint": "eslint src",
+    "lint-fix": "eslint src --fix",
+    "build": "kumoya build"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "esbuild": "^0.24.2",
+    "globby": "^14.0.2",
+    "minimatch": "^10.0.1",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "yarn@4.4.1"
+}
