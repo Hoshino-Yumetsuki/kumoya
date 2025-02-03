@@ -1,4 +1,4 @@
-import { globby } from "globby";
+import globby from "globby";
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "./logger";
