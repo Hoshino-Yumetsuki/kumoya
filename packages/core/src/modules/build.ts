@@ -103,6 +103,12 @@ export class Builder {
     return this.config.extension ? `.${this.config.extension}` : ".js";
   }
 
+  private normalizePath(p: string): string {
+    // 转换为相对于根工作区的路径，并统一使用左斜杠
+    const relativePath = path.relative(process.cwd(), p).replace(/\\/g, '/');
+    return relativePath;
+  }
+
   private async buildWithEsbuild(entry: string, format: "esm" | "cjs" = "cjs") {
     let outputFile: string;
 
@@ -112,12 +118,10 @@ export class Builder {
       format = ext === "mjs" ? "esm" : "cjs";
     } else {
       const extension = this.getOutputExtension(format);
-      outputFile = path
-        .join(
-          this.config.outputFolder!,
-          `${path.parse(entry).name}${extension}`,
-        )
-        .replace(/\\/g, "/");
+      outputFile = path.join(
+        this.config.outputFolder!,
+        `${path.parse(entry).name}${extension}`
+      );
     }
 
     if (this.config.packages && this.config.external) {
@@ -145,7 +149,7 @@ export class Builder {
       buildOptions.external = this.config.external;
 
     logger.info(
-      `${path.posix.normalize(entry)} ==> ${path.posix.normalize(outputFile)}`,
+      `${this.normalizePath(entry)} ==> ${this.normalizePath(outputFile)}`
     );
 
     await esbuild.build({
@@ -175,10 +179,6 @@ export class Builder {
       include.some((pattern: string) => minimatch(filePath, pattern)) &&
       !exclude.some((pattern: string) => minimatch(filePath, pattern))
     );
-  }
-
-  private normalizePath(p: string): string {
-    return p.replace(/\\/g, "/");
   }
 
   private async buildTypes() {
