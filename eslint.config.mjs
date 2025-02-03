@@ -11,7 +11,7 @@ import nPlugin from "eslint-plugin-n";
 export default [
     {
         files: ["**/*.{js,jsx,ts,tsx}"],
-        ignores: ["node_modules/**", "main.js"],
+        ignores: ["node_modules/**", "main.js", "**/*.d.ts"],
         languageOptions: {
             parser: tsparser,
             parserOptions: {
