@@ -291,7 +291,9 @@ export class Builder {
     const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
 
     if (subWorkspaces.length > 0) {
-      logger.info(`Building workspace ./${workspacePath} and its subworkspaces...`);
+      logger.info(
+        `Building workspace ./${workspacePath} and its subworkspaces...`,
+      );
       const builder = new Builder(config);
       await builder.build();
 
@@ -308,7 +310,10 @@ export class Builder {
     }
   }
 
-  static async buildAll(workspaceName: string | undefined, workspace: Workspace) {
+  static async buildAll(
+    workspaceName: string | undefined,
+    workspace: Workspace,
+  ) {
     if (workspaceName) {
       const workspacePaths = workspace.getWorkspacePath(workspaceName);
       logger.info(`Found ${workspacePaths.length} matching workspaces`);

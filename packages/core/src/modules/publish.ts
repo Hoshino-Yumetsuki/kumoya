@@ -7,18 +7,32 @@ export class Publisher {
   static async publishWorkspace(
     workspacePath: string,
     workspace: Workspace,
-    npmCommand: string
+    npmCommand: string,
   ) {
     if (!workspace.isWorkspace(workspacePath)) {
+      if (workspace.isSingleWorkspace()) {
+        const publishPath = path.join(process.cwd(), workspacePath);
+        logger.info(`Publishing package: ./${workspacePath}`);
+
+        try {
+          execSync(npmCommand, {
+            cwd: publishPath,
+            stdio: "inherit",
+          });
+          logger.success(`Successfully published package: ./${workspacePath}`);
+          return;
+        } catch (error) {
+          throw new Error(`Failed to publish package: ${error.message}`);
+        }
+      }
+
       const directWorkspaces = workspace.getWorkspaces("/" + workspacePath);
-      logger.info(`Publishing all workspaces under ./${workspacePath}...`);
+      logger.info(`Publishing all packages under ./${workspacePath}...`);
 
       for (const directWorkspace of directWorkspaces) {
         if (workspace.isWorkspace(directWorkspace)) {
           const publishPath = path.join(process.cwd(), directWorkspace);
-          logger.info(
-            `Publishing workspace: ./${directWorkspace} with command: ${npmCommand}`,
-          );
+          logger.info(`Publishing package: ./${directWorkspace}`);
 
           try {
             execSync(npmCommand, {
@@ -26,36 +40,36 @@ export class Publisher {
               stdio: "inherit",
             });
             logger.success(
-              `Successfully published workspace: ./${directWorkspace}`,
+              `Successfully published package: ./${directWorkspace}`,
             );
           } catch (error) {
             logger.error(
-              `Failed to publish workspace ./${directWorkspace}: ${error.message}`,
+              `Failed to publish package: ./${directWorkspace}: ${error.message}`,
             );
           }
         }
       }
     } else {
       const publishPath = path.join(process.cwd(), workspacePath);
-      logger.info(
-        `Publishing workspace: ./${workspacePath} with command: ${npmCommand}`,
-      );
+      logger.info(`Publishing package: ./${workspacePath}`);
 
       try {
         execSync(npmCommand, {
           cwd: publishPath,
           stdio: "inherit",
         });
-        logger.success(
-          `Successfully published workspace: ./${workspacePath}`,
-        );
+        logger.success(`Successfully published package: ./${workspacePath}`);
       } catch (error) {
-        throw new Error(`Failed to publish workspace: ${error.message}`);
+        throw new Error(`Failed to publish package: ${error.message}`);
       }
     }
   }
 
-  static async publishAll(workspaceName: string, npmArgs: string[], workspace: Workspace) {
+  static async publishAll(
+    workspaceName: string,
+    npmArgs: string[],
+    workspace: Workspace,
+  ) {
     if (!workspaceName) {
       throw new Error("Workspace name is required for publish command");
     }
@@ -68,4 +82,4 @@ export class Publisher {
       await Publisher.publishWorkspace(workspacePath, workspace, npmCommand);
     }
   }
-} 
+}

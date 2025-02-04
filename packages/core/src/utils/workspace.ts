@@ -165,4 +165,12 @@ export class Workspace {
 
     throw new Error(`Cannot find workspace or directory "${name}"`);
   }
+
+  isSingleWorkspace(): boolean {
+    return (
+      Object.keys(this.workspaces).length === 1 &&
+      this.workspaces[""] &&
+      !this.workspaces[""].workspaces
+    );
+  }
 }
