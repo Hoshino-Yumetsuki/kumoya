@@ -2,6 +2,7 @@ import { KumoyaConfig } from "../types";
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "../utils/logger";
+import { loadConfig } from "../utils/config";
 
 export const defaultConfig = `export const kumoyaConfig = {
   entry: './src/index.ts',
@@ -74,4 +75,21 @@ export function initializeConfig(configPath: string): boolean {
     }
   }
   return false;
+}
+
+export class Initializer {
+  static async initialize() {
+    try {
+      const configExists = await loadConfig().catch(() => false);
+      if (!configExists) {
+        await loadConfig("init");
+        logger.info("Initialization completed");
+      } else {
+        logger.info("");
+      }
+    } catch (error) {
+      logger.error(error);
+      process.exit(1);
+    }
+  }
 }
