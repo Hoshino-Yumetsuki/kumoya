@@ -1,11 +1,11 @@
-import * as esbuild from "esbuild";
-import * as path from "path";
+import esbuild from "esbuild";
+import path from "path";
 import { BuilderOptions, KumoyaConfig } from "../types";
-import * as fs from "fs";
+import fs from "fs";
 import { minimatch } from "minimatch";
 import { BuildError, logger } from "../utils/logger";
 import { DtsBundler } from "../utils/tsc";
-import * as ts from "typescript";
+import ts from "typescript";
 import { Workspace } from "../utils/workspace";
 import { loadConfig } from "../utils/config";
 
@@ -25,7 +25,6 @@ export class Builder {
       ...options.kumoyaConfig,
     } as KumoyaConfig;
 
-    // 调整入口点路径
     if (this.config.entry) {
       const entries = Array.isArray(this.config.entry)
         ? this.config.entry
@@ -35,7 +34,6 @@ export class Builder {
       );
     }
 
-    // 调整输出路径
     if (this.config.outputFolder) {
       this.config.outputFolder = path.join(
         this.workingDir,
@@ -106,7 +104,6 @@ export class Builder {
   }
 
   private normalizePath(p: string): string {
-    // 转换为相对于根工作区的路径，并统一使用左斜杠
     const relativePath = path.relative(process.cwd(), p).replace(/\\/g, "/");
     return `./${relativePath}`;
   }
@@ -171,16 +168,6 @@ export class Builder {
       acc[dir].push(entry);
       return acc;
     }, {});
-  }
-
-  private isInTsConfig(filePath: string): boolean {
-    const include = this.tsConfig?.include || [];
-    const exclude = this.tsConfig?.exclude || [];
-
-    return (
-      include.some((pattern: string) => minimatch(filePath, pattern)) &&
-      !exclude.some((pattern: string) => minimatch(filePath, pattern))
-    );
   }
 
   private async buildTypes() {
@@ -316,13 +303,13 @@ export class Builder {
   ) {
     if (workspaceName) {
       const workspacePaths = workspace.getWorkspacePath(workspaceName);
-      logger.info(`Found ${workspacePaths.length} matching workspaces`);
+      logger.debug(`Found ${workspacePaths.length} matching workspaces`);
 
       for (const workspacePath of workspacePaths) {
         await Builder.buildWorkspace(workspacePath, workspace);
       }
     } else {
-      logger.info("Building root workspace...");
+      logger.debug("Building root workspace...");
       const config = await loadConfig();
       const builder = new Builder(config);
       await builder.build();

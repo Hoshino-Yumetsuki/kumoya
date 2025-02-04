@@ -65,18 +65,29 @@ export class Publisher {
     }
   }
 
-  static async publishAll(
-    workspaceName: string,
-    npmArgs: string[],
-    workspace: Workspace,
-  ) {
-    if (!workspaceName) {
-      throw new Error("Workspace name is required for publish command");
+  static async publishAll(workspaceName: string | undefined, npmArgs: string[], workspace: Workspace) {
+    const npmCommand = ["npm", "publish", ...npmArgs].join(" ");
+
+    if (!workspaceName && workspace.isSingleWorkspace()) {
+      logger.info(`Publishing package...`);
+      try {
+        execSync(npmCommand, {
+          cwd: process.cwd(),
+          stdio: "inherit",
+        });
+        logger.success("Successfully published package");
+        return;
+      } catch (error) {
+        throw new Error(`Failed to publish package: ${error.message}`);
+      }
     }
 
-    const npmCommand = ["npm", "publish", ...npmArgs].join(" ");
+    if (!workspaceName) {
+      throw new Error("Workspace name is required for publishing in a multi-workspace project");
+    }
+
     const workspacePaths = workspace.getWorkspacePath(workspaceName);
-    logger.info(`Found ${workspacePaths.length} matching workspaces`);
+    logger.debug(`Found ${workspacePaths.length} matching workspaces`);
 
     for (const workspacePath of workspacePaths) {
       await Publisher.publishWorkspace(workspacePath, workspace, npmCommand);
