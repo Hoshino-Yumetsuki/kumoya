@@ -77,6 +77,10 @@ export class Workspace {
   }
 
   isWorkspace(path: string): boolean {
+    if (Object.keys(this.workspaces).length === 1 && this.workspaces[""]) {
+      return path === "" || path === "/";
+    }
+
     return Object.values(this.workspaces).some(
       (pkg) => pkg.relativePath === path || "/" + pkg.relativePath === path,
     );
@@ -84,6 +88,10 @@ export class Workspace {
 
   getWorkspaces(basePath: string = ""): string[] {
     logger.debug(`Getting all workspaces under: ${basePath}`);
+
+    if (Object.keys(this.workspaces).length === 1 && this.workspaces[""]) {
+      return [];
+    }
 
     if (basePath && !this.isWorkspace(basePath)) {
       return Object.entries(this.workspaces)
@@ -113,6 +121,16 @@ export class Workspace {
 
   getWorkspacePath(name: string): string[] {
     logger.debug(`Looking for workspace: ${name}`);
+
+    if (Object.keys(this.workspaces).length === 1 && this.workspaces[""]) {
+      if (name === "." || name === "") {
+        return [""];
+      }
+      throw new Error(
+        `Not a workspace project. Cannot find workspace "${name}"`,
+      );
+    }
+
     logger.debug(
       `Available workspaces: ${JSON.stringify(Object.values(this.workspaces).map((pkg) => pkg.name))}`,
     );
