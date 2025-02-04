@@ -32,60 +32,7 @@ async function main() {
 
   if (command === "build") {
     try {
-      if (workspaceName) {
-        const workspacePaths = workspace.getWorkspacePath(workspaceName);
-        logger.info(`Found ${workspacePaths.length} matching workspaces`);
-
-        for (const workspacePath of workspacePaths) {
-          if (!workspace.isWorkspace(workspacePath)) {
-            const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
-            logger.info(`Building all workspaces under ${workspacePath}...`);
-
-            for (const subWorkspace of subWorkspaces) {
-              const subConfig = await loadConfig(
-                "kumoya.config.mjs",
-                subWorkspace,
-              );
-              logger.info(`Building workspace: ${subWorkspace}...`);
-              const subBuilder = new Builder(subConfig);
-              await subBuilder.build();
-            }
-            continue;
-          }
-
-          const config = await loadConfig("kumoya.config.mjs", workspacePath);
-          const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
-
-          if (subWorkspaces.length > 0) {
-            logger.info(
-              `Building workspace ${workspacePath} and its subworkspaces...`,
-            );
-            const builder = new Builder(config);
-            await builder.build();
-
-            for (const subWorkspace of subWorkspaces) {
-              const subConfig = await loadConfig(
-                "kumoya.config.mjs",
-                subWorkspace,
-              );
-              logger.info(`Building subworkspace: ${subWorkspace}...`);
-              const subBuilder = new Builder(subConfig);
-              await subBuilder.build();
-            }
-          } else {
-            logger.info(`Building workspace: ${workspacePath}...`);
-            const builder = new Builder(config);
-            await builder.build();
-          }
-        }
-      } else {
-        logger.info("Building root workspace...");
-        const config = await loadConfig();
-        const builder = new Builder(config);
-        await builder.build();
-      }
-
-      logger.success("Build completed!");
+      await Builder.buildAll(workspaceName, workspace);
     } catch (error) {
       if (error instanceof BuildError) {
         logger.error(error);

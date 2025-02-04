@@ -6,6 +6,8 @@ import { minimatch } from "minimatch";
 import { BuildError, logger } from "../utils/logger";
 import { DtsBundler } from "../utils/tsc";
 import * as ts from "typescript";
+import { Workspace } from "../utils/workspace";
+import { loadConfig } from "../utils/config";
 
 export class Builder {
   private config: KumoyaConfig;
@@ -269,5 +271,58 @@ export class Builder {
     if (this.config.outputType) {
       await this.buildTypes();
     }
+  }
+
+  static async buildWorkspace(workspacePath: string, workspace: Workspace) {
+    if (!workspace.isWorkspace(workspacePath)) {
+      const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
+      logger.info(`Building all workspaces under ${workspacePath}...`);
+
+      for (const subWorkspace of subWorkspaces) {
+        const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
+        logger.info(`Building workspace: ${subWorkspace}...`);
+        const subBuilder = new Builder(subConfig);
+        await subBuilder.build();
+      }
+      return;
+    }
+
+    const config = await loadConfig("kumoya.config.mjs", workspacePath);
+    const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
+
+    if (subWorkspaces.length > 0) {
+      logger.info(`Building workspace ${workspacePath} and its subworkspaces...`);
+      const builder = new Builder(config);
+      await builder.build();
+
+      for (const subWorkspace of subWorkspaces) {
+        const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
+        logger.info(`Building subworkspace: ${subWorkspace}...`);
+        const subBuilder = new Builder(subConfig);
+        await subBuilder.build();
+      }
+    } else {
+      logger.info(`Building workspace: ${workspacePath}...`);
+      const builder = new Builder(config);
+      await builder.build();
+    }
+  }
+
+  static async buildAll(workspaceName: string | undefined, workspace: Workspace) {
+    if (workspaceName) {
+      const workspacePaths = workspace.getWorkspacePath(workspaceName);
+      logger.info(`Found ${workspacePaths.length} matching workspaces`);
+
+      for (const workspacePath of workspacePaths) {
+        await Builder.buildWorkspace(workspacePath, workspace);
+      }
+    } else {
+      logger.info("Building root workspace...");
+      const config = await loadConfig();
+      const builder = new Builder(config);
+      await builder.build();
+    }
+
+    logger.success("Build completed!");
   }
 }
