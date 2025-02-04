@@ -1,4 +1,4 @@
-import globby from "globby";
+import { globby } from "globby";
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "./logger";
@@ -27,9 +27,9 @@ export class Workspace {
     );
 
     if (!rootPkg.workspaces) {
-      logger.debug('No workspaces defined, treating as single workspace');
-      rootPkg.relativePath = '';
-      this.workspaces = { '': rootPkg };
+      logger.debug("No workspaces defined, treating as single workspace");
+      rootPkg.relativePath = "";
+      this.workspaces = { "": rootPkg };
       return;
     }
 

@@ -1,19 +1,17 @@
 {
   "name": "kumoya",
-  "version": "1.4.0",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
+  "version": "1.6.0",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
       "import": "./dist/index.mjs"
     },
     "./package.json": "./package.json"
   },
-  "bin": "./dist/index.mjs",
+  "bin": "./dist/index.js",
   "files": [
     "dist"
   ],
@@ -37,10 +35,14 @@
     "build": "kumoya build"
   },
   "dependencies": {
+    "@rollup/plugin-multi-entry": "^6.0.1",
     "chalk": "^5.4.1",
     "esbuild": "^0.24.2",
     "globby": "^14.0.2",
+    "memfs": "^4.17.0",
     "minimatch": "^10.0.1",
+    "rollup": "^4.34.2",
+    "rollup-plugin-dts": "^6.1.1",
     "typescript": "^5.7.3"
   },
   "packageManager": "yarn@4.4.1"

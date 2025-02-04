@@ -2,7 +2,7 @@ import * as esbuild from "esbuild";
 import * as path from "path";
 import { BuilderOptions, KumoyaConfig } from "../types";
 import * as fs from "fs";
-import minimatch from "minimatch";
+import { minimatch } from "minimatch";
 import { BuildError, logger } from "../utils/logger";
 import { DtsBundler } from "../utils/tsc";
 import * as ts from "typescript";
@@ -198,6 +198,8 @@ export class Builder {
         declaration: true,
         emitDeclarationOnly: true,
         noEmit: false,
+        outDir: this.config.outputFolder,
+        declarationDir: this.config.outputFolder,
       };
 
       const entries = Array.isArray(this.config.entry)
@@ -213,6 +215,8 @@ export class Builder {
           .join(finalOutputDir, `${entryName}.d.ts`)
           .replace(/\\/g, "/");
 
+        fs.mkdirSync(path.dirname(outputFile), { recursive: true });
+
         const program = ts.createProgram([entry], compilerOptions);
         await dtsBundler.bundleTypes(program, outputFile, entry);
       }
@@ -225,17 +229,22 @@ export class Builder {
         path.dirname(tsConfigPath),
       );
 
+      const compilerOptions: ts.CompilerOptions = {
+        ...parsedConfig.options,
+        declaration: true,
+        emitDeclarationOnly: true,
+        noEmit: false,
+        outDir: this.config.outputFolder,
+        declarationDir: this.config.outputFolder,
+      };
+
+      fs.mkdirSync(this.config.outputFolder!, { recursive: true });
+
       const program = ts.createProgram(
         Array.isArray(this.config.entry)
           ? this.config.entry
           : [this.config.entry],
-        {
-          ...parsedConfig.options,
-          declaration: true,
-          emitDeclarationOnly: true,
-          noEmit: false,
-          outDir: this.config.outputFolder,
-        },
+        compilerOptions,
       );
       program.emit();
     }
