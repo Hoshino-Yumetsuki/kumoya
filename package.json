@@ -6,8 +6,10 @@
   "scripts": {
     "lint": "eslint",
     "lint-fix": "eslint --fix",
-    "build": "kumoya build"
+    "build": "kumoya build",
+    "publish": "kumoya publish"
   },
+
   "devDependencies": {
     "@types/node": "^22.13.0",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
