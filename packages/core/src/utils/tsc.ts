@@ -99,6 +99,6 @@ export class DtsBundler {
 
   private normalizePath(p: string): string {
     const relativePath = path.relative(process.cwd(), p).replace(/\\/g, "/");
-    return relativePath;
+    return `./${relativePath}`;
   }
 }

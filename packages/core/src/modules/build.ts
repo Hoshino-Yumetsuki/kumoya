@@ -108,7 +108,7 @@ export class Builder {
   private normalizePath(p: string): string {
     // 转换为相对于根工作区的路径，并统一使用左斜杠
     const relativePath = path.relative(process.cwd(), p).replace(/\\/g, "/");
-    return relativePath;
+    return `./${relativePath}`;
   }
 
   private async buildWithEsbuild(entry: string, format: "esm" | "cjs" = "cjs") {
@@ -276,11 +276,11 @@ export class Builder {
   static async buildWorkspace(workspacePath: string, workspace: Workspace) {
     if (!workspace.isWorkspace(workspacePath)) {
       const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
-      logger.info(`Building all workspaces under ${workspacePath}...`);
+      logger.info(`Building all workspaces under ./${workspacePath}...`);
 
       for (const subWorkspace of subWorkspaces) {
         const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
-        logger.info(`Building workspace: ${subWorkspace}...`);
+        logger.info(`Building workspace: ./${subWorkspace}...`);
         const subBuilder = new Builder(subConfig);
         await subBuilder.build();
       }
@@ -291,18 +291,18 @@ export class Builder {
     const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
 
     if (subWorkspaces.length > 0) {
-      logger.info(`Building workspace ${workspacePath} and its subworkspaces...`);
+      logger.info(`Building workspace ./${workspacePath} and its subworkspaces...`);
       const builder = new Builder(config);
       await builder.build();
 
       for (const subWorkspace of subWorkspaces) {
         const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
-        logger.info(`Building subworkspace: ${subWorkspace}...`);
+        logger.info(`Building subworkspace: ./${subWorkspace}...`);
         const subBuilder = new Builder(subConfig);
         await subBuilder.build();
       }
     } else {
-      logger.info(`Building workspace: ${workspacePath}...`);
+      logger.info(`Building workspace: ./${workspacePath}...`);
       const builder = new Builder(config);
       await builder.build();
     }
