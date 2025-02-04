@@ -65,7 +65,11 @@ export class Publisher {
     }
   }
 
-  static async publishAll(workspaceName: string | undefined, npmArgs: string[], workspace: Workspace) {
+  static async publishAll(
+    workspaceName: string | undefined,
+    npmArgs: string[],
+    workspace: Workspace,
+  ) {
     const npmCommand = ["npm", "publish", ...npmArgs].join(" ");
 
     if (!workspaceName && workspace.isSingleWorkspace()) {
@@ -83,7 +87,9 @@ export class Publisher {
     }
 
     if (!workspaceName) {
-      throw new Error("Workspace name is required for publishing in a multi-workspace project");
+      throw new Error(
+        "Workspace name is required for publishing in a multi-workspace project",
+      );
     }
 
     const workspacePaths = workspace.getWorkspacePath(workspaceName);

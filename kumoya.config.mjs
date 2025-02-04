@@ -6,4 +6,5 @@ export const kumoyaConfig = {
     format: "esm",
     platform: "node",
     minify: true,
+    treeShaking: true,
 };
