@@ -10,8 +10,7 @@ export class DtsBundler {
   private tempDir: string;
 
   constructor() {
-    // 在工作区创建临时目录
-    this.tempDir = path.join(process.cwd(), ".kumoya-dts");
+    this.tempDir = path.join(process.cwd(), ".kumoyatmp");
     fs.mkdirSync(this.tempDir, { recursive: true });
   }
 
@@ -20,16 +19,13 @@ export class DtsBundler {
     outputFile: string,
     entryPoint?: string,
   ): Promise<void> {
-    // 使用原始路径结构在临时目录中生成声明文件
     const emitResult = program.emit(
       undefined,
       (fileName: string, data: string) => {
         if (fileName.endsWith(".d.ts")) {
-          // 保持原始路径结构
           const relativePath = path.relative(process.cwd(), fileName);
           const tempFile = path.join(this.tempDir, relativePath);
 
-          // 确保目标目录存在
           fs.mkdirSync(path.dirname(tempFile), { recursive: true });
           fs.writeFileSync(tempFile, data);
           logger.debug(`Generated declaration file: ${relativePath}`);
@@ -41,7 +37,6 @@ export class DtsBundler {
       throw new Error("Failed to generate declaration files");
     }
 
-    // 获取所有生成的声明文件
     const declarationFiles = this.getAllFiles(this.tempDir).filter((file) =>
       file.endsWith(".d.ts"),
     );
@@ -75,7 +70,6 @@ export class DtsBundler {
       );
     }
 
-    // 清理临时目录
     fs.rmSync(this.tempDir, { recursive: true, force: true });
   }
 

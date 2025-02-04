@@ -2,7 +2,6 @@ import esbuild from "esbuild";
 import path from "path";
 import { BuilderOptions, KumoyaConfig } from "../types";
 import fs from "fs";
-import { minimatch } from "minimatch";
 import { BuildError, logger } from "../utils/logger";
 import { DtsBundler } from "../utils/tsc";
 import ts from "typescript";
