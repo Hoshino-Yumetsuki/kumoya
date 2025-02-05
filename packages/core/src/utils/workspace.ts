@@ -1,6 +1,6 @@
+import fs from "fs";
+import path from "path";
 import { globby } from "globby";
-import * as fs from "fs";
-import * as path from "path";
 import { logger } from "./logger";
 
 export interface PackageJson {

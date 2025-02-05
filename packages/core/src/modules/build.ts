@@ -1,10 +1,10 @@
-import esbuild from "esbuild";
 import path from "path";
-import { BuilderOptions, KumoyaConfig } from "../types";
 import fs from "fs";
+import esbuild from "esbuild";
+import ts from "typescript";
+import { BuilderOptions, KumoyaConfig } from "../types";
 import { BuildError, logger } from "../utils/logger";
 import { DtsBundler } from "../utils/tsc";
-import ts from "typescript";
 import { Workspace } from "../utils/workspace";
 import { loadConfig } from "../utils/config";
 
@@ -130,11 +130,22 @@ export class Builder {
       entryPoints: [entry],
       bundle: this.config.bundle,
       outfile: outputFile,
-      packages: this.config.packages || "external",
       platform: this.config.platform || "node",
       format,
       target: this.config.target || "es2015",
     };
+
+    if (this.config.packages) {
+      buildOptions.packages = this.config.packages;
+    }
+
+    if (this.config.external?.length) {
+      buildOptions.external = this.config.external;
+    }
+
+    if (this.esbuildConfig?.external?.length) {
+      buildOptions.external = this.esbuildConfig.external;
+    }
 
     if (this.config.minify !== undefined)
       buildOptions.minify = this.config.minify;
@@ -143,8 +154,6 @@ export class Builder {
     if (this.config.treeShaking !== undefined)
       buildOptions.treeShaking = this.config.treeShaking;
     if (this.config.logLevel) buildOptions.logLevel = this.config.logLevel;
-    if (this.config.external?.length)
-      buildOptions.external = this.config.external;
 
     logger.info(
       `${this.normalizePath(entry)} ==> ${this.normalizePath(outputFile)}`,
@@ -154,19 +163,6 @@ export class Builder {
       ...buildOptions,
       ...this.esbuildConfig,
     });
-  }
-
-  private getEntryDirs(): { [dir: string]: string[] } {
-    const entries = Array.isArray(this.config.entry)
-      ? this.config.entry
-      : [this.config.entry];
-
-    return entries.reduce((acc: { [dir: string]: string[] }, entry) => {
-      const dir = path.dirname(entry);
-      acc[dir] = acc[dir] || [];
-      acc[dir].push(entry);
-      return acc;
-    }, {});
   }
 
   private async buildTypes() {

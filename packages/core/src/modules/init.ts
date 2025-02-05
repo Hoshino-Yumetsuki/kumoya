@@ -1,6 +1,6 @@
-import { KumoyaConfig } from "../types";
 import fs from "fs";
 import path from "path";
+import { KumoyaConfig } from "../types";
 import { logger } from "../utils/logger";
 import { loadConfig } from "../utils/config";
 

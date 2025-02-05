@@ -1,9 +1,9 @@
-import { BuilderOptions } from "../types";
-import * as path from "path";
-import { BuildError, logger } from "./logger";
+import fs from "fs";
+import path from "path";
 import { pathToFileURL } from "url";
+import { BuilderOptions } from "../types";
+import { BuildError, logger } from "./logger";
 import { validateKumoyaConfig, initializeConfig } from "../modules/init";
-import * as fs from "fs";
 
 async function validateEntry(
   entry: string | string[],

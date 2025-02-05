@@ -1,10 +1,10 @@
 import ts from "typescript";
 import path from "path";
+import fs from "fs";
 import { logger } from "./logger";
 import { rollup } from "rollup";
 import multiEntry from "@rollup/plugin-multi-entry";
 import dts from "rollup-plugin-dts";
-import fs from "fs";
 
 export class DtsBundler {
   private tempDir: string;
@@ -54,8 +54,6 @@ export class DtsBundler {
 
     await bundle.write({
       file: outputFile,
-      format: "es",
-      sourcemap: false,
     });
 
     await bundle.close();

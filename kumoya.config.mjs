@@ -7,4 +7,5 @@ export const kumoyaConfig = {
     platform: "node",
     minify: true,
     treeShaking: true,
+    packages: "external"
 };
