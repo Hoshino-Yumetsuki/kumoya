@@ -777,27 +777,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@root/kumoya@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "@root/kumoya@workspace:."
-  dependencies:
-    "@types/node": "npm:^22.13.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.21.0"
-    "@typescript-eslint/parser": "npm:^8.21.0"
-    esbuild: "npm:^0.24.2"
-    eslint: "npm:^9.15.0"
-    eslint-config-prettier: "npm:^9.1.0"
-    eslint-config-standard: "npm:^17.1.0"
-    eslint-plugin-import: "npm:^2.30.0"
-    eslint-plugin-n: "npm:^16.6.2"
-    eslint-plugin-prettier: "npm:^5.2.1"
-    eslint-plugin-promise: "npm:^7.1.0"
-    koishi: "npm:^4.18.7"
-    kumoya: "workspace:^"
-    prettier: "npm:^3.3.3"
-  languageName: unknown
-  linkType: soft
-
 "@rtsao/scc@npm:^1.1.0":
   version: 1.1.0
   resolution: "@rtsao/scc@npm:1.1.0"
@@ -3436,14 +3415,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"kumoya@workspace:^, kumoya@workspace:packages/core":
+"kumoya@workspace:.":
   version: 0.0.0-use.local
-  resolution: "kumoya@workspace:packages/core"
+  resolution: "kumoya@workspace:."
   dependencies:
     "@rollup/plugin-multi-entry": "npm:^6.0.1"
+    "@types/node": "npm:^22.13.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.21.0"
+    "@typescript-eslint/parser": "npm:^8.21.0"
     chalk: "npm:^5.4.1"
     esbuild: "npm:^0.24.2"
+    eslint: "npm:^9.15.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    eslint-config-standard: "npm:^17.1.0"
+    eslint-plugin-import: "npm:^2.30.0"
+    eslint-plugin-n: "npm:^16.6.2"
+    eslint-plugin-prettier: "npm:^5.2.1"
+    eslint-plugin-promise: "npm:^7.1.0"
     globby: "npm:^14.0.2"
+    koishi: "npm:^4.18.7"
+    prettier: "npm:^3.3.3"
     rollup: "npm:^4.34.2"
     rollup-plugin-dts: "npm:^6.1.1"
     typescript: "npm:^5.7.3"
