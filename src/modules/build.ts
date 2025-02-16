@@ -267,10 +267,10 @@ export class Builder {
 
   static async buildWorkspace(workspacePath: string, workspace: Workspace) {
     if (!workspace.isWorkspace(workspacePath)) {
-      const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
+      const subWorkspaces = await workspace.getDirectWorkspaces(
+        "/" + workspacePath,
+      );
       logger.info(`Building all workspaces under ./${workspacePath}...`);
-
-      const rootConfig = await loadConfig();
 
       for (const subWorkspace of subWorkspaces) {
         let subConfig = await loadConfig(
@@ -282,19 +282,9 @@ export class Builder {
           logger.debug(
             `No config found in ./${subWorkspace}, using root config`,
           );
-          subConfig = rootConfig;
+          subConfig = await loadConfig();
         } else {
-          logger.debug(
-            `Merging config from ./${subWorkspace} with root config`,
-          );
-          subConfig = {
-            ...rootConfig,
-            ...subConfig,
-            kumoyaConfig: {
-              ...rootConfig.kumoyaConfig,
-              ...subConfig.kumoyaConfig,
-            },
-          };
+          logger.debug(`Using config from ./${subWorkspace}`);
         }
 
         logger.info(`Building workspace: ./${subWorkspace}...`);
@@ -303,6 +293,12 @@ export class Builder {
           root: subWorkspace,
         });
         await subBuilder.build();
+
+        // 检查是否有嵌套的子工作区
+        if (await workspace.hasNestedWorkspaces(subWorkspace)) {
+          logger.debug(`Found nested workspaces in ./${subWorkspace}`);
+          await Builder.buildWorkspace(subWorkspace, workspace);
+        }
       }
       return;
     }
@@ -409,24 +405,33 @@ export class Builder {
       } else {
         logger.debug("Building all workspaces including root...");
 
-        try {
+        const allWorkspaces = workspace.getWorkspaces();
+        if (allWorkspaces.length > 0) {
+          try {
+            const rootConfig = await loadConfig();
+            const rootBuilder = new Builder(rootConfig);
+            await rootBuilder.build();
+          } catch (error) {
+            if (
+              error instanceof BuildError &&
+              (error.message.includes("Could not find entry point") ||
+                error.message.includes("No entry point specified"))
+            ) {
+              logger.debug(
+                "Skipping root workspace build: no entry point found",
+              );
+            } else {
+              throw error;
+            }
+          }
+
+          for (const workspacePath of allWorkspaces) {
+            await Builder.buildWorkspace(workspacePath, workspace);
+          }
+        } else {
           const rootConfig = await loadConfig();
           const rootBuilder = new Builder(rootConfig);
           await rootBuilder.build();
-        } catch (error) {
-          if (
-            error instanceof BuildError &&
-            error.message.includes("Could not find entry point")
-          ) {
-            logger.debug("Skipping root workspace build: no entry point found");
-          } else {
-            throw error;
-          }
-        }
-
-        const allWorkspaces = workspace.getWorkspaces();
-        for (const workspacePath of allWorkspaces) {
-          await Builder.buildWorkspace(workspacePath, workspace);
         }
       }
     }

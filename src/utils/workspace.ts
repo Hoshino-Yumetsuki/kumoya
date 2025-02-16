@@ -11,6 +11,7 @@ export interface PackageJson {
 
 export class Workspace {
   private workspaces: Record<string, PackageJson> = {};
+  private workspacePatterns: string[] = [];
   private cwd: string;
 
   constructor(cwd: string) {
@@ -33,47 +34,106 @@ export class Workspace {
       return;
     }
 
-    const workspacePatterns = rootPkg.workspaces.map((pattern) =>
-      pattern.replace(/\/?$/, "/**/package.json"),
+    this.workspacePatterns = Array.isArray(rootPkg.workspaces)
+      ? rootPkg.workspaces
+      : rootPkg.workspaces.packages || [];
+
+    await this.collectWorkspaces();
+  }
+
+  private async collectWorkspaces() {
+    const patterns = this.workspacePatterns.map((pattern) =>
+      pattern.replace(/\/?$/, "/package.json"),
     );
 
-    logger.debug(
-      `Using workspace patterns: ${JSON.stringify(workspacePatterns)}`,
-    );
+    logger.debug(`Using workspace patterns: ${JSON.stringify(patterns)}`);
 
-    const files = await globby(workspacePatterns, {
+    const files = await globby(patterns, {
       cwd: this.cwd,
       onlyFiles: true,
     });
 
-    const folders = files.map((file) => path.dirname(file));
-    folders.unshift("");
+    for (const file of files) {
+      const dir = path.dirname(file);
+      try {
+        const pkg = JSON.parse(
+          await fs.promises.readFile(path.join(this.cwd, file), "utf8"),
+        );
+        pkg.relativePath = dir;
+        this.workspaces["/" + dir] = pkg;
+        logger.debug(`Found workspace "${pkg.name}" at ${dir}`);
+      } catch (error) {
+        logger.warn(`Failed to read package.json at ${dir}: ${error.message}`);
+      }
+    }
+  }
 
-    logger.debug(`Found workspace folders: ${JSON.stringify(folders)}`);
+  async hasNestedWorkspaces(workspacePath: string): Promise<boolean> {
+    const fullPath = path.join(this.cwd, workspacePath);
 
-    this.workspaces = Object.fromEntries(
-      (
-        await Promise.all(
-          folders.map(async (folder) => {
-            const pkgPath = folder ? "/" + folder : "";
-            try {
-              const fullPath = path.join(this.cwd, folder, "package.json");
-              logger.debug(`Reading package.json from: ${fullPath}`);
-              const content = await fs.promises.readFile(fullPath, "utf8");
-              const pkg = JSON.parse(content);
-              pkg.relativePath = folder;
-              logger.debug(`Found package "${pkg.name}" at ${folder}`);
-              return [pkgPath, pkg] as [string, PackageJson];
-            } catch (error) {
-              logger.warn(
-                `Failed to read package.json at ${folder}: ${error.message}`,
-              );
-              return null;
-            }
-          }),
-        )
-      ).filter(Boolean),
-    );
+    try {
+      const pkg = JSON.parse(
+        await fs.promises.readFile(path.join(fullPath, "package.json"), "utf8"),
+      );
+
+      if (pkg.workspaces) {
+        const patterns = Array.isArray(pkg.workspaces)
+          ? pkg.workspaces
+          : pkg.workspaces.packages || [];
+
+        const nestedPatterns = patterns.map((pattern) =>
+          path.join(workspacePath, pattern, "package.json"),
+        );
+
+        const files = await globby(nestedPatterns, {
+          cwd: this.cwd,
+          onlyFiles: true,
+        });
+
+        return files.length > 0;
+      }
+    } catch (error) {
+    }
+
+    const potentialNestedPatterns = this.workspacePatterns
+      .filter((pattern) => {
+        const segments = pattern.split("/");
+        return segments.length > 2;
+      })
+      .map((pattern) =>
+        path.join(
+          workspacePath,
+          pattern.split("/").slice(1).join("/"),
+          "package.json",
+        ),
+      );
+
+    const files = await globby(potentialNestedPatterns, {
+      cwd: this.cwd,
+      onlyFiles: true,
+    });
+
+    return files.length > 0;
+  }
+
+  async getDirectWorkspaces(basePath: string = ""): Promise<string[]> {
+    const normalizedBasePath = basePath.startsWith("/")
+      ? basePath
+      : "/" + basePath;
+
+    return Object.entries(this.workspaces)
+      .filter(([folder, _]) => {
+        if (!normalizedBasePath) return !folder.slice(1).includes("/");
+
+        const relativePath = folder.slice(1);
+        if (!relativePath.startsWith(basePath)) return false;
+
+        const remainingPath = relativePath.slice(basePath.length);
+        return (
+          remainingPath.startsWith("/") && !remainingPath.slice(1).includes("/")
+        );
+      })
+      .map(([_, pkg]) => pkg.relativePath);
   }
 
   isWorkspace(path: string): boolean {
