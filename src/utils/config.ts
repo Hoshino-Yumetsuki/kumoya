@@ -50,6 +50,20 @@ export async function loadConfig(
       const rootConfigPath = path.resolve(process.cwd(), configPath);
       const rootConfigUrl = pathToFileURL(rootConfigPath).href;
       config = await import(rootConfigUrl);
+
+      if (config.kumoyaConfig?.entry) {
+        const entries = Array.isArray(config.kumoyaConfig.entry)
+          ? config.kumoyaConfig.entry
+          : [config.kumoyaConfig.entry];
+
+        config.kumoyaConfig.entry = entries.map((entry) => {
+          if (entry.startsWith("./") || entry.startsWith("../")) {
+            return entry;
+          }
+          const absolutePath = path.resolve(process.cwd(), entry);
+          return path.relative(basePath, absolutePath);
+        });
+      }
     }
 
     if (!config.kumoyaConfig) {
@@ -62,7 +76,6 @@ export async function loadConfig(
       );
     }
 
-    // 验证入口点是否存在
     const isEntryValid = await validateEntry(
       config.kumoyaConfig.entry,
       basePath,

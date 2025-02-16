@@ -92,8 +92,7 @@ export class Workspace {
 
         return files.length > 0;
       }
-    } catch (error) {
-    }
+    } catch (error) {}
 
     const potentialNestedPatterns = this.workspacePatterns
       .filter((pattern) => {

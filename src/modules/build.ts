@@ -273,58 +273,51 @@ export class Builder {
       logger.info(`Building all workspaces under ./${workspacePath}...`);
 
       for (const subWorkspace of subWorkspaces) {
+        const subWorkspacePath = path.join(workspacePath, subWorkspace);
+
         let subConfig = await loadConfig(
           "kumoya.config.mjs",
-          subWorkspace,
+          subWorkspacePath,
         ).catch(() => null);
 
         if (!subConfig) {
-          logger.debug(
-            `No config found in ./${subWorkspace}, using root config`,
-          );
           subConfig = await loadConfig();
+          logger.debug(
+            `No config found in ./${subWorkspacePath}, using root config`,
+          );
         } else {
-          logger.debug(`Using config from ./${subWorkspace}`);
+          logger.debug(`Using config from ./${subWorkspacePath}`);
         }
 
-        logger.info(`Building workspace: ./${subWorkspace}...`);
+        logger.info(`Building workspace: ./${subWorkspacePath}...`);
         const subBuilder = new Builder({
           ...subConfig,
-          root: subWorkspace,
+          root: subWorkspacePath,
         });
         await subBuilder.build();
 
-        // 检查是否有嵌套的子工作区
-        if (await workspace.hasNestedWorkspaces(subWorkspace)) {
-          logger.debug(`Found nested workspaces in ./${subWorkspace}`);
-          await Builder.buildWorkspace(subWorkspace, workspace);
+        if (await workspace.hasNestedWorkspaces(subWorkspacePath)) {
+          logger.debug(`Found nested workspaces in ./${subWorkspacePath}`);
+          await Builder.buildWorkspace(subWorkspacePath, workspace);
         }
       }
       return;
     }
-
-    const rootConfig = await loadConfig();
 
     let config = await loadConfig("kumoya.config.mjs", workspacePath).catch(
       () => null,
     );
 
     if (!config) {
+      config = await loadConfig();
       logger.debug(`No config found in ./${workspacePath}, using root config`);
-      config = rootConfig;
     } else {
-      logger.debug(`Merging config from ./${workspacePath} with root config`);
-      config = {
-        ...rootConfig,
-        ...config,
-        kumoyaConfig: {
-          ...rootConfig.kumoyaConfig,
-          ...config.kumoyaConfig,
-        },
-      };
+      logger.debug(`Using config from ./${workspacePath}`);
     }
 
-    const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
+    const subWorkspaces = await workspace.getDirectWorkspaces(
+      "/" + workspacePath,
+    );
 
     if (subWorkspaces.length > 0) {
       logger.info(
@@ -337,34 +330,26 @@ export class Builder {
       await builder.build();
 
       for (const subWorkspace of subWorkspaces) {
+        const subWorkspacePath = path.join(workspacePath, subWorkspace);
+
         let subConfig = await loadConfig(
           "kumoya.config.mjs",
-          subWorkspace,
+          subWorkspacePath,
         ).catch(() => null);
 
         if (!subConfig) {
+          subConfig = await loadConfig();
           logger.debug(
-            `No config found in ./${subWorkspace}, using parent config`,
+            `No config found in ./${subWorkspacePath}, using root config`,
           );
-          subConfig = config;
         } else {
-          logger.debug(
-            `Merging config from ./${subWorkspace} with parent config`,
-          );
-          subConfig = {
-            ...config,
-            ...subConfig,
-            kumoyaConfig: {
-              ...config.kumoyaConfig,
-              ...subConfig.kumoyaConfig,
-            },
-          };
+          logger.debug(`Using config from ./${subWorkspacePath}`);
         }
 
-        logger.info(`Building subworkspace: ./${subWorkspace}...`);
+        logger.info(`Building subworkspace: ./${subWorkspacePath}...`);
         const subBuilder = new Builder({
           ...subConfig,
-          root: subWorkspace,
+          root: subWorkspacePath,
         });
         await subBuilder.build();
       }
