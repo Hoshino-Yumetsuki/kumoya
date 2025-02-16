@@ -377,17 +377,37 @@ export class Builder {
     workspace: Workspace,
   ) {
     if (workspaceName) {
-      const workspacePaths = workspace.getWorkspacePath(workspaceName);
-      logger.debug(`Found ${workspacePaths.length} matching workspaces`);
+      if (workspaceName === ".") {
+        logger.debug("Building root workspace only...");
+        const config = await loadConfig();
+        const builder = new Builder(config);
+        await builder.build();
+      } else {
+        const workspacePaths = workspace.getWorkspacePath(workspaceName);
+        logger.debug(`Found ${workspacePaths.length} matching workspaces`);
 
-      for (const workspacePath of workspacePaths) {
-        await Builder.buildWorkspace(workspacePath, workspace);
+        for (const workspacePath of workspacePaths) {
+          await Builder.buildWorkspace(workspacePath, workspace);
+        }
       }
     } else {
-      logger.debug("Building root workspace...");
-      const config = await loadConfig();
-      const builder = new Builder(config);
-      await builder.build();
+      if (workspace.isSingleWorkspace()) {
+        logger.debug("Building root workspace...");
+        const config = await loadConfig();
+        const builder = new Builder(config);
+        await builder.build();
+      } else {
+        logger.debug("Building all workspaces including root...");
+
+        const rootConfig = await loadConfig();
+        const rootBuilder = new Builder(rootConfig);
+        await rootBuilder.build();
+
+        const allWorkspaces = workspace.getWorkspaces();
+        for (const workspacePath of allWorkspaces) {
+          await Builder.buildWorkspace(workspacePath, workspace);
+        }
+      }
     }
 
     logger.success("Build completed!");
