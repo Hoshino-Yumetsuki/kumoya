@@ -260,59 +260,105 @@ export class Builder {
       const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
       logger.info(`Building all workspaces under ./${workspacePath}...`);
 
+      const rootConfig = await loadConfig();
+
       for (const subWorkspace of subWorkspaces) {
-        let subConfig = await loadConfig("kumoya.config.mjs", subWorkspace).catch(() => null);
-        
+        let subConfig = await loadConfig(
+          "kumoya.config.mjs",
+          subWorkspace,
+        ).catch(() => null);
+
         if (!subConfig) {
-          subConfig = await loadConfig();
-          logger.debug(`No config found in ./${subWorkspace}, using root config`);
+          logger.debug(
+            `No config found in ./${subWorkspace}, using root config`,
+          );
+          subConfig = rootConfig;
         } else {
-          logger.debug(`Using config from ./${subWorkspace}`);
+          logger.debug(
+            `Merging config from ./${subWorkspace} with root config`,
+          );
+          subConfig = {
+            ...rootConfig,
+            ...subConfig,
+            kumoyaConfig: {
+              ...rootConfig.kumoyaConfig,
+              ...subConfig.kumoyaConfig,
+            },
+          };
         }
-        
+
         logger.info(`Building workspace: ./${subWorkspace}...`);
         const subBuilder = new Builder({
           ...subConfig,
-          root: subWorkspace
+          root: subWorkspace,
         });
         await subBuilder.build();
       }
       return;
     }
 
-    let config = await loadConfig("kumoya.config.mjs", workspacePath).catch(() => null);
-    
+    const rootConfig = await loadConfig();
+
+    let config = await loadConfig("kumoya.config.mjs", workspacePath).catch(
+      () => null,
+    );
+
     if (!config) {
-      config = await loadConfig();
       logger.debug(`No config found in ./${workspacePath}, using root config`);
+      config = rootConfig;
     } else {
-      logger.debug(`Using config from ./${workspacePath}`);
+      logger.debug(`Merging config from ./${workspacePath} with root config`);
+      config = {
+        ...rootConfig,
+        ...config,
+        kumoyaConfig: {
+          ...rootConfig.kumoyaConfig,
+          ...config.kumoyaConfig,
+        },
+      };
     }
 
     const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
 
     if (subWorkspaces.length > 0) {
-      logger.info(`Building workspace ./${workspacePath} and its subworkspaces...`);
+      logger.info(
+        `Building workspace ./${workspacePath} and its subworkspaces...`,
+      );
       const builder = new Builder({
         ...config,
-        root: workspacePath
+        root: workspacePath,
       });
       await builder.build();
 
       for (const subWorkspace of subWorkspaces) {
-        let subConfig = await loadConfig("kumoya.config.mjs", subWorkspace).catch(() => null);
-        
+        let subConfig = await loadConfig(
+          "kumoya.config.mjs",
+          subWorkspace,
+        ).catch(() => null);
+
         if (!subConfig) {
-          subConfig = await loadConfig();
-          logger.debug(`No config found in ./${subWorkspace}, using root config`);
+          logger.debug(
+            `No config found in ./${subWorkspace}, using parent config`,
+          );
+          subConfig = config;
         } else {
-          logger.debug(`Using config from ./${subWorkspace}`);
+          logger.debug(
+            `Merging config from ./${subWorkspace} with parent config`,
+          );
+          subConfig = {
+            ...config,
+            ...subConfig,
+            kumoyaConfig: {
+              ...config.kumoyaConfig,
+              ...subConfig.kumoyaConfig,
+            },
+          };
         }
 
         logger.info(`Building subworkspace: ./${subWorkspace}...`);
         const subBuilder = new Builder({
           ...subConfig,
-          root: subWorkspace
+          root: subWorkspace,
         });
         await subBuilder.build();
       }
@@ -320,7 +366,7 @@ export class Builder {
       logger.info(`Building workspace: ./${workspacePath}...`);
       const builder = new Builder({
         ...config,
-        root: workspacePath
+        root: workspacePath,
       });
       await builder.build();
     }
