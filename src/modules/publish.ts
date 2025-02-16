@@ -70,7 +70,7 @@ export class Publisher {
     npmArgs: string[],
     workspace: Workspace,
   ) {
-    const npmCommand = ["npm", "publish", ...npmArgs].join(" ");
+    const npmCommand = ["yarn", "npm", "publish", ...npmArgs].join(" ");
 
     if (!workspaceName && workspace.isSingleWorkspace()) {
       logger.info(`Publishing package...`);
