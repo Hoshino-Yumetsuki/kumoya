@@ -28,6 +28,16 @@ export class Builder {
       const entries = Array.isArray(this.config.entry)
         ? this.config.entry
         : [this.config.entry];
+
+      for (const entry of entries) {
+        const entryPath = path.join(this.workingDir, entry);
+        if (!fs.existsSync(entryPath)) {
+          throw new BuildError(
+            `Could not find entry point:\n  - ${entry}\nPlease check your configuration and ensure the entry paths are correct relative to: ${this.workingDir}`,
+          );
+        }
+      }
+
       this.config.entry = entries.map((entry) =>
         path.join(this.workingDir, entry),
       );
@@ -399,9 +409,20 @@ export class Builder {
       } else {
         logger.debug("Building all workspaces including root...");
 
-        const rootConfig = await loadConfig();
-        const rootBuilder = new Builder(rootConfig);
-        await rootBuilder.build();
+        try {
+          const rootConfig = await loadConfig();
+          const rootBuilder = new Builder(rootConfig);
+          await rootBuilder.build();
+        } catch (error) {
+          if (
+            error instanceof BuildError &&
+            error.message.includes("Could not find entry point")
+          ) {
+            logger.debug("Skipping root workspace build: no entry point found");
+          } else {
+            throw error;
+          }
+        }
 
         const allWorkspaces = workspace.getWorkspaces();
         for (const workspacePath of allWorkspaces) {
