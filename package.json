@@ -1,6 +1,6 @@
 {
   "name": "kumoya",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -11,7 +11,9 @@
     },
     "./package.json": "./package.json"
   },
-  "bin": "./dist/index.js",
+  "bin": {
+    "kumoya": "./dist/index.js"
+  },
   "files": [
     "dist"
   ],
@@ -33,7 +35,7 @@
     "lint": "eslint",
     "lint-fix": "eslint --fix",
     "build": "kumoya build",
-    "publish": "kumoya publish"
+    "publish": "yarn npm publish"
   },
   "dependencies": {
     "@rollup/plugin-multi-entry": "^6.0.1",
