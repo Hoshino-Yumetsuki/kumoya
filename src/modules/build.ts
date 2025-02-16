@@ -403,10 +403,16 @@ export class Builder {
         const builder = new Builder(config);
         await builder.build();
       } else {
-        logger.debug("Building all workspaces including root...");
+        logger.debug("Building all workspaces...");
 
         const allWorkspaces = workspace.getWorkspaces();
-        if (allWorkspaces.length > 0) {
+
+        if (allWorkspaces.length === 0) {
+          logger.debug("No workspaces found, building root workspace...");
+          const rootConfig = await loadConfig();
+          const rootBuilder = new Builder(rootConfig);
+          await rootBuilder.build();
+        } else {
           try {
             const rootConfig = await loadConfig();
             const rootBuilder = new Builder(rootConfig);
@@ -426,12 +432,14 @@ export class Builder {
           }
 
           for (const workspacePath of allWorkspaces) {
-            await Builder.buildWorkspace(workspacePath, workspace);
+            try {
+              await Builder.buildWorkspace(workspacePath, workspace);
+            } catch (error) {
+              logger.error(
+                `Failed to build workspace ${workspacePath}: ${error.message}`,
+              );
+            }
           }
-        } else {
-          const rootConfig = await loadConfig();
-          const rootBuilder = new Builder(rootConfig);
-          await rootBuilder.build();
         }
       }
     }
