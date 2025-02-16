@@ -261,33 +261,67 @@ export class Builder {
       logger.info(`Building all workspaces under ./${workspacePath}...`);
 
       for (const subWorkspace of subWorkspaces) {
-        const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
+        let subConfig = await loadConfig("kumoya.config.mjs", subWorkspace).catch(() => null);
+        
+        if (!subConfig) {
+          subConfig = await loadConfig();
+          logger.debug(`No config found in ./${subWorkspace}, using root config`);
+        } else {
+          logger.debug(`Using config from ./${subWorkspace}`);
+        }
+        
         logger.info(`Building workspace: ./${subWorkspace}...`);
-        const subBuilder = new Builder(subConfig);
+        const subBuilder = new Builder({
+          ...subConfig,
+          root: subWorkspace
+        });
         await subBuilder.build();
       }
       return;
     }
 
-    const config = await loadConfig("kumoya.config.mjs", workspacePath);
+    let config = await loadConfig("kumoya.config.mjs", workspacePath).catch(() => null);
+    
+    if (!config) {
+      config = await loadConfig();
+      logger.debug(`No config found in ./${workspacePath}, using root config`);
+    } else {
+      logger.debug(`Using config from ./${workspacePath}`);
+    }
+
     const subWorkspaces = workspace.getWorkspaces("/" + workspacePath);
 
     if (subWorkspaces.length > 0) {
-      logger.info(
-        `Building workspace ./${workspacePath} and its subworkspaces...`,
-      );
-      const builder = new Builder(config);
+      logger.info(`Building workspace ./${workspacePath} and its subworkspaces...`);
+      const builder = new Builder({
+        ...config,
+        root: workspacePath
+      });
       await builder.build();
 
       for (const subWorkspace of subWorkspaces) {
-        const subConfig = await loadConfig("kumoya.config.mjs", subWorkspace);
+        let subConfig = await loadConfig("kumoya.config.mjs", subWorkspace).catch(() => null);
+        
+        if (!subConfig) {
+          subConfig = await loadConfig();
+          logger.debug(`No config found in ./${subWorkspace}, using root config`);
+        } else {
+          logger.debug(`Using config from ./${subWorkspace}`);
+        }
+
         logger.info(`Building subworkspace: ./${subWorkspace}...`);
-        const subBuilder = new Builder(subConfig);
+        const subBuilder = new Builder({
+          ...subConfig,
+          root: subWorkspace
+        });
         await subBuilder.build();
       }
     } else {
       logger.info(`Building workspace: ./${workspacePath}...`);
-      const builder = new Builder(config);
+      const builder = new Builder({
+        ...config,
+        root: workspacePath
+      });
       await builder.build();
     }
   }
