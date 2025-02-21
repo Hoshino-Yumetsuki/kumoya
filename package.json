@@ -1,5 +1,5 @@
 {
-  "name": "@root/dumble",
+  "name": "@root/kumoya",
   "private": true,
   "type": "module",
   "version": "1.0.0",
@@ -10,10 +10,8 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "tsc -b && node --import tsx packages/core/src/bin.ts",
     "lint": "eslint packages",
-    "lint-fix": "eslint packages --fix",
-    "test": "yarn build"
+    "lint-fix": "eslint packages --fix"
   },
   "devDependencies": {
     "@types/node": "^22.1.0",
