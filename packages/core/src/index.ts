@@ -163,7 +163,7 @@ async function kumoya(
     cwd: string,
     manifest: PackageJson,
     tsconfig: TsConfig,
-    options: KumoyaOptions = {}
+    _options: KumoyaOptions = {}
 ) {
     const {
         rootDir = '',
