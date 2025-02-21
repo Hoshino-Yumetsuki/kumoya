@@ -149,10 +149,10 @@ kumoya --sourcemap=inline
 
 ### Minification
 
-Kumoya does not minify your code by default. If you want to minify your code, you can set `--minify` option.
+Kumoya is minify your code by default. If you want disable minification, you can set `--no-minify` or `-nm` option.
 
 ```sh
-kumoya --minify
+kumoya --no-minify
 ```
 
 ## Credits
