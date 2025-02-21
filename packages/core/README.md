@@ -166,3 +166,5 @@ kumoya --no-minify
 If you find kumoya not satisfying your needs, consider using pkgroll instead (better yet, open an issue or pull request to improve kumoya).
 
 Compared to pkgroll, kumoya is simpler and more focused on zero-configuration. Also, kumoya can be easily integrated into a monorepo with multiple packages, and can be further customized with esbuild options.
+
+[dumble](https://github.com/cordiverse/dumble) is the original project of this project, without it there wouldn't be kumoya
