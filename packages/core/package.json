@@ -14,13 +14,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cordiverse/kumoya.git",
+    "url": "git+https://github.com/Hoshino-Yumetsuki/kumoya.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/cordiverse/kumoya/issues"
+    "url": "https://github.com/Hoshino-Yumetsuki/kumoya/issues"
   },
-  "homepage": "https://github.com/cordiverse/kumoya",
+  "homepage": "https://github.com/Hoshino-Yumetsuki/kumoya",
   "author": "Q78KG <hoshino-yumetsuki@outlook.com>",
   "license": "MIT",
   "devDependencies": {
