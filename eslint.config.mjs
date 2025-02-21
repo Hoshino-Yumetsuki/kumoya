@@ -48,7 +48,8 @@ export default [
             "no-prototype-builtins": "off",
             "@typescript-eslint/no-empty-function": "off",
             "no-redeclare": "off",
-            "@typescript-eslint/no-explicit-any": "off"
+            "@typescript-eslint/no-explicit-any": "off",
+            "no-use-before-define": "off",
         },
     },
 ];

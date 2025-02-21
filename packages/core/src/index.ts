@@ -43,12 +43,6 @@ export interface PackageJson
     peerDependenciesMeta?: Record<string, { optional?: boolean }>
 }
 
-const ignored = [
-    'This call to "require" will not be bundled because the argument is not a string literal',
-    'Indirect calls to "require" will not be bundled',
-    'should be marked as external for use with "require.resolve"'
-]
-
 async function bundle(options: RolldownOptions, base: string) {
     const entryPoints = options.input as Record<string, string>
 
