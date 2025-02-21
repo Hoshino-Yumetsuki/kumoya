@@ -142,6 +142,25 @@ export interface KumoyaData {
     exports: Record<string, Record<string, string>>
 }
 
+function getOutputExtension(manifest: any): string {
+    if (manifest.exports) {
+        const mainExport =
+            typeof manifest.exports === 'object'
+                ? manifest.exports['.']?.import ||
+                  manifest.exports['.']?.require
+                : manifest.exports
+        if (mainExport) return extname(mainExport)
+    }
+
+    // 直接返回 main 字段指定的扩展名
+    if (manifest.main) {
+        return extname(manifest.main)
+    }
+
+    // 如果没有 main 字段，则根据 type 字段决定默认扩展名
+    return manifest.type === 'module' ? '.mjs' : '.cjs'
+}
+
 async function kumoya(
     cwd: string,
     manifest: PackageJson,
@@ -199,12 +218,20 @@ async function kumoya(
     ) {
         if (!pattern) return
         if (pattern.startsWith('./')) pattern = pattern.slice(2)
+
+        // 如果是默认的 .js 扩展名，根据 package.json 的配置决定实际使用的扩展名
+        if (extname(pattern) === '.js') {
+            const targetExt = getOutputExtension(manifest)
+            pattern = pattern.slice(0, -3) + targetExt
+        }
+
         const result = await (resolveCache[pattern] ??= resolvePattern(pattern))
         if (!result) return
 
         const [outExt, targets] = result
         preset = { ...preset }
 
+        // 根据文件扩展名设置输出格式
         if (outExt === '.cjs') {
             preset.output = { ...preset.output, format: 'cjs' }
         } else if (outExt === '.mjs') {
