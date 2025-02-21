@@ -14,13 +14,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cordiverse/dumble.git",
+    "url": "git+https://github.com/cordiverse/kumoya.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/cordiverse/dumble/issues"
+    "url": "https://github.com/cordiverse/kumoya/issues"
   },
-  "homepage": "https://github.com/cordiverse/dumble",
+  "homepage": "https://github.com/cordiverse/kumoya",
   "author": "Q78KG <hoshino-yumetsuki@outlook.com>",
   "license": "MIT",
   "devDependencies": {

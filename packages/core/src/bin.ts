@@ -4,9 +4,9 @@ import { readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cac } from 'cac'
 import { load } from 'tsconfig-utils'
-import dumble from './index.js'
+import kumoya from './index.js'
 
-const cli = cac('dumble [name]')
+const cli = cac('kumoya [name]')
     .option('-nm, --no-minify', 'Do not minify output')
     .option('--env <env>', 'Compile-time environment variables')
     .help()
@@ -20,6 +20,6 @@ if (!argv.options.help) {
             JSON.parse
         )
         const tsconfig = await load(cwd)
-        await dumble(cwd, manifest, tsconfig, argv.options)
+        await kumoya(cwd, manifest, tsconfig, argv.options)
     }
 }

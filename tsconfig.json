@@ -3,8 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "dumble": ["packages/core/src"],
-      "dumble-*": ["packages/*/src"],
+      "kumoya": ["packages/core/src"],
+      "kumoya-*": ["packages/*/src"],
     },
   },
   "files": [],

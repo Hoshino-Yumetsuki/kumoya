@@ -83,7 +83,7 @@ const externalPlugin = ({
     manifest,
     exports: _exports,
     tsconfig: _tsconfig
-}: DumbleData): RollupPlugin => ({
+}: KumoyaData): RollupPlugin => ({
     name: 'external-library',
     resolveId(source: string, importer?: string) {
         if (!source) return null
@@ -136,23 +136,23 @@ const hashbangPlugin = (binaries: string[]): RollupPlugin => ({
     }
 })
 
-export interface DumbleOptions {
+export interface KumoyaOptions {
     minify?: boolean
     env?: Record<string, string>
 }
 
-export interface DumbleData {
+export interface KumoyaData {
     cwd: string
     manifest: PackageJson
     tsconfig: TsConfig
     exports: Record<string, Record<string, string>>
 }
 
-async function dumble(
+async function kumoya(
     cwd: string,
     manifest: PackageJson,
     tsconfig: TsConfig,
-    options: DumbleOptions = {}
+    options: KumoyaOptions = {}
 ) {
     const {
         rootDir = '',
@@ -353,4 +353,4 @@ async function dumble(
     )
 }
 
-export default dumble
+export default kumoya
