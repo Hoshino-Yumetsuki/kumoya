@@ -1,7 +1,7 @@
 # kumoya
 
 [![npm](https://img.shields.io/npm/v/kumoya?style=flat-square)](https://www.npmjs.com/package/kumoya)
-[![GitHub](https://img.shields.io/github/license/cordiverse/kumoya?style=flat-square)](https://github.com/cordiverse/kumoya/blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/Hoshino-Yumetsuki/kumoya?style=flat-square)](https://github.com/cordiverse/kumoya/blob/master/LICENSE)
 
 Kumoya is a zero-configuration bundler for your TypeScript project.
 
