@@ -24,6 +24,10 @@ export const DependencyType = [
 ] as const
 export type DependencyType = (typeof DependencyType)[number]
 
+export interface PackageJsonExports {
+    [key: string]: string | PackageJsonExports
+}
+
 export interface PackageJson
     extends Partial<Record<DependencyType, Record<string, string>>> {
     name: string
@@ -31,16 +35,12 @@ export interface PackageJson
     main?: string
     module?: string
     bin?: string | Record<string, string>
-    exports?: PackageJson.Exports
+    exports?: PackageJsonExports
     description?: string
     private?: boolean
     version: string
     workspaces?: string[]
     peerDependenciesMeta?: Record<string, { optional?: boolean }>
-}
-
-export namespace PackageJson {
-    export type Exports = string | { [key: string]: Exports }
 }
 
 const ignored = [
@@ -59,7 +59,7 @@ async function bundle(options: RolldownOptions, base: string) {
             ? options.output[0].dir
             : options.output?.dir
         const target = relative(base, resolve(outputDir!, key + '.js'))
-        console.log('rollup:', source, '->', target)
+        console.log('rolldown:', source, '->', target)
     }
 
     try {
@@ -79,10 +79,11 @@ async function bundle(options: RolldownOptions, base: string) {
 }
 
 const externalPlugin = ({
-    cwd,
+    cwd: _cwd,
     manifest,
-    exports
-}: dumble.Data): RollupPlugin => ({
+    exports: _exports,
+    tsconfig: _tsconfig
+}: DumbleData): RollupPlugin => ({
     name: 'external-library',
     resolveId(source: string, importer?: string) {
         if (!source) return null
@@ -135,25 +136,23 @@ const hashbangPlugin = (binaries: string[]): RollupPlugin => ({
     }
 })
 
-namespace dumble {
-    export interface Options {
-        minify?: boolean
-        env?: Record<string, string>
-    }
+export interface DumbleOptions {
+    minify?: boolean
+    env?: Record<string, string>
+}
 
-    export interface Data {
-        cwd: string
-        manifest: PackageJson
-        tsconfig: TsConfig
-        exports: Record<string, Record<string, string>>
-    }
+export interface DumbleData {
+    cwd: string
+    manifest: PackageJson
+    tsconfig: TsConfig
+    exports: Record<string, Record<string, string>>
 }
 
 async function dumble(
     cwd: string,
     manifest: PackageJson,
     tsconfig: TsConfig,
-    options: dumble.Options = {}
+    options: DumbleOptions = {}
 ) {
     const {
         rootDir = '',
@@ -164,12 +163,6 @@ async function dumble(
     } = tsconfig.compilerOptions
     if (!noEmit && !emitDeclarationOnly) return
     const outDir = tsconfig.compilerOptions.outDir ?? dirname(outFile!)
-
-    const define = Object.fromEntries(
-        Object.entries(options.env ?? {}).map(([key, value]) => {
-            return [`process.env.${key}`, JSON.stringify(value)]
-        })
-    )
 
     const outdir = resolve(cwd, outDir)
     const outbase = resolve(cwd, rootDir)
@@ -260,7 +253,7 @@ async function dumble(
                 plugins: [
                     nodeResolve(),
                     yamlPlugin(),
-                    externalPlugin({ cwd, manifest, tsconfig, exports }),
+                    externalPlugin({ cwd, manifest, exports, tsconfig }),
                     hashbangPlugin(binaries),
                     // @ts-expect-error
                     options.minify !== false && terser()
@@ -273,7 +266,7 @@ async function dumble(
 
     // TODO: support null targets
     function addConditionalExport(
-        pattern: PackageJson.Exports | undefined,
+        pattern: string | PackageJsonExports | undefined,
         preset: RolldownOptions,
         prefix = ''
     ) {
