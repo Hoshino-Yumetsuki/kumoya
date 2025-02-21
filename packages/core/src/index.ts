@@ -9,7 +9,6 @@ import {
 import { isBuiltin } from 'node:module'
 import { TsConfig } from 'tsconfig-utils'
 import { rolldown, RolldownOptions, Plugin as RollupPlugin } from 'rolldown'
-import { nodeResolve } from '@rollup/plugin-node-resolve'
 import yaml from 'js-yaml'
 import globby from 'globby'
 import terser from '@rollup/plugin-terser'
@@ -261,7 +260,6 @@ async function kumoya(
                 },
                 external: [],
                 plugins: [
-                    nodeResolve(),
                     yamlPlugin(),
                     externalPlugin({ cwd, manifest, exports, tsconfig }),
                     hashbangPlugin(binaries),
