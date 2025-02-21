@@ -12,7 +12,7 @@ export function apply(ctx: Context) {
                 const cwd = ctx.yakumo.cwd + path
                 const tsconfig = await load(cwd).catch(() => null)
                 if (!tsconfig) return
-                await kumoya(cwd, ctx.yakumo.workspaces[path], tsconfig)
+                await kumoya(cwd, ctx.yakumo.workspaces[path] as any, tsconfig)
             })
         )
     })
