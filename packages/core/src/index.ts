@@ -256,7 +256,6 @@ async function kumoya(
                           ? 'es'
                           : 'cjs',
                     sourcemap: sourceMap,
-                    preserveModules: true,
                     exports: 'auto',
                     entryFileNames: '[name]'
                 },
@@ -266,8 +265,7 @@ async function kumoya(
                     yamlPlugin(),
                     externalPlugin({ cwd, manifest, exports, tsconfig }),
                     hashbangPlugin(binaries),
-                    // @ts-expect-error
-                    options.minify !== false && terser()
+                    terser()
                 ].filter(Boolean)
             })
         }
