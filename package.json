@@ -12,13 +12,12 @@
   "scripts": {
     "lint": "eslint packages",
     "lint-fix": "eslint packages --fix",
-    "build": "node --import tsx packages/core/src/bin.ts"
+    "build": "yakumo build"
   },
   "devDependencies": {
     "@types/node": "^22.1.0",
     "@typescript-eslint/eslint-plugin": "^8.24.1",
     "@typescript-eslint/parser": "^8.24.1",
-    "c8": "^7.14.0",
     "eslint": "^9.12.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-standard": "^17.1.0",
@@ -27,7 +26,6 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-promise": "^7.1.0",
     "prettier": "^3.3.3",
-    "shx": "^0.3.4",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
     "yakumo": "^1.0.0-beta.21",
