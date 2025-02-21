@@ -46,25 +46,25 @@ export interface PackageJson
 async function bundle(options: RolldownOptions, base: string) {
     const entryPoints = options.input as Record<string, string>
 
+    // 获取输出配置
+    const outputConfig = Array.isArray(options.output)
+        ? options.output[0]
+        : options.output
+
     // show entry list
     for (const [key, value] of Object.entries(entryPoints)) {
         const source = relative(base, value)
-        const outputDir = Array.isArray(options.output)
-            ? options.output[0].dir
-            : options.output?.dir
-        const target = relative(base, resolve(outputDir!, key + '.js'))
+        const outputDir = outputConfig?.dir
+        const target = relative(base, resolve(outputDir!, key))
         console.log('rolldown:', source, '->', target)
     }
 
     try {
         const bundle = await rolldown(options)
         await bundle.write({
-            ...(Array.isArray(options.output)
-                ? options.output[0]
-                : options.output),
-            format: Array.isArray(options.output)
-                ? options.output[0].format || 'es'
-                : options.output?.format || 'es'
+            ...outputConfig,
+            format: outputConfig?.format || 'es',
+            entryFileNames: '[name]'
         })
         await bundle.close()
     } catch (error) {
@@ -184,13 +184,10 @@ async function kumoya(
             return
         }
 
-        // https://nodejs.org/api/packages.html#subpath-patterns
-        // `*` maps expose nested subpaths as it is a string replacement syntax only
+        // 保持原始的扩展名，不再强制改为.js
         const outExt = extname(pattern)
-        pattern =
-            pattern
-                .slice(outDir.length + 1, -outExt.length)
-                .replace('*', '**') + '.{ts,tsx}'
+        const basePattern = pattern.slice(outDir.length + 1, -outExt.length)
+        pattern = basePattern.replace('*', '**') + '.{ts,tsx}'
         return [outExt, await globby(pattern, { cwd: outbase })] as const
     }
 
@@ -205,9 +202,9 @@ async function kumoya(
         const result = await (resolveCache[pattern] ??= resolvePattern(pattern))
         if (!result) return
 
-        // transform options by extension
         const [outExt, targets] = result
         preset = { ...preset }
+
         if (outExt === '.cjs') {
             preset.output = { ...preset.output, format: 'cjs' }
         } else if (outExt === '.mjs') {
@@ -229,7 +226,7 @@ async function kumoya(
             }
 
             matrix.push({
-                input: { [entry]: srcFile },
+                input: { [entry + outExt]: srcFile },
                 output: {
                     dir: outdir,
                     format: Array.isArray(preset.output)
@@ -241,7 +238,8 @@ async function kumoya(
                           : 'cjs',
                     sourcemap: sourceMap,
                     preserveModules: true,
-                    exports: 'auto'
+                    exports: 'auto',
+                    entryFileNames: '[name]'
                 },
                 external: [],
                 plugins: [
@@ -289,7 +287,6 @@ async function kumoya(
                     prefix
                 )
             } else if (['types', 'typings'].includes(key)) {
-                // use `undefined` to indicate `.d.ts` files
                 addConditionalExport(
                     pattern[key],
                     { ...preset, platform: undefined },
@@ -322,7 +319,6 @@ async function kumoya(
     addConditionalExport(manifest.exports, preset)
 
     if (!manifest.exports) {
-        // do not bundle `package.json`
         tasks.push(addExport('package.json', preset, null))
     }
 

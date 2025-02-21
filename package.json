@@ -11,7 +11,8 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint packages",
-    "lint-fix": "eslint packages --fix"
+    "lint-fix": "eslint packages --fix",
+    "build": "node --import tsx packages/core/src/bin.ts"
   },
   "devDependencies": {
     "@types/node": "^22.1.0",
