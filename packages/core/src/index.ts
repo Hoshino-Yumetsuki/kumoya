@@ -164,6 +164,7 @@ async function kumoya(
     tsconfig: TsConfig,
     _options: KumoyaOptions = {}
 ) {
+    const options = _options
     const {
         rootDir = '',
         outFile,
@@ -222,7 +223,6 @@ async function kumoya(
         const [outExt, targets] = result
         preset = { ...preset }
 
-        // 根据文件扩展名设置输出格式
         if (outExt === '.cjs') {
             preset.output = { ...preset.output, format: 'cjs' }
         } else if (outExt === '.mjs') {
@@ -263,7 +263,12 @@ async function kumoya(
                     yamlPlugin(),
                     externalPlugin({ cwd, manifest, exports, tsconfig }),
                     hashbangPlugin(binaries),
-                    terser()
+                    options.minify !== false &&
+                        terser({
+                            output: {
+                                ascii_only: true
+                            }
+                        })
                 ].filter(Boolean)
             })
         }

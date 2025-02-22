@@ -98,34 +98,34 @@ For most scenarios, you don't need to configure anything. Below are some propert
 ### Entry Points and Exports
 
 | `package.json` property | Output Format |
-| --- | --- |
-| main | auto-detected |
-| module | esmodule |
-| types | declaration |
-| exports.* | auto-detected |
-| exports.*.require | commonjs |
-| exports.*.import | esmodule |
-| bin | auto-detected |
+| ----------------------- | ------------- |
+| main                    | auto-detected |
+| module                  | esmodule      |
+| types                   | declaration   |
+| exports.*               | auto-detected |
+| exports.*.require       | commonjs      |
+| exports.*.import        | esmodule      |
+| bin                     | auto-detected |
 
 Auto-detection is based on the extension and the [`type`](https://nodejs.org/api/packages.html#type) field in `package.json`:
 
-| Extension | Type |
-| --- | --- |
-| `.cjs` | commonjs |
-| `.mjs` | esmodule |
-| `.js` | esmodule if `type` is `"module"`, <br>commonjs otherwise |
+| Extension | Type                                                     |
+| --------- | -------------------------------------------------------- |
+| `.cjs`    | commonjs                                                 |
+| `.mjs`    | esmodule                                                 |
+| `.js`     | esmodule if `type` is `"module"`, <br>commonjs otherwise |
 
 ### Dependency bundling
 
 Packages to externalize are detected by reading dependency types in `package.json`:
 
-| Dependency Type | Behavior |
-| --- | --- |
-| `dependencies` | external |
-| `peerDependencies` | external |
+| Dependency Type        | Behavior |
+| ---------------------- | -------- |
+| `dependencies`         | external |
+| `peerDependencies`     | external |
 | `optionalDependencies` | external |
-| `devDependencies` | bundle |
-| not listed | error |
+| `devDependencies`      | bundle   |
+| not listed             | error    |
 
 ## More Options
 
@@ -149,7 +149,7 @@ kumoya --sourcemap=inline
 
 ### Minification
 
-Kumoya is minify your code by default. If you want disable minification, you can set `--no-minify` or `-nm` option.
+Kumoya is minify your code by default. If you want disable minification, you can set `--no-minify` option.
 
 ```sh
 kumoya --no-minify
