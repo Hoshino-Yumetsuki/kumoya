@@ -7,7 +7,7 @@ import { load } from 'tsconfig-utils'
 import kumoya from './index.js'
 
 const cli = cac('kumoya [name]')
-    .option('--no-minify', 'Do not minify output')
+    .option('--minify', 'Minify output')
     .option('--env <env>', 'Compile-time environment variables')
     .help()
 

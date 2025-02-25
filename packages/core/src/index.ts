@@ -263,12 +263,12 @@ async function kumoya(
                     yamlPlugin(),
                     externalPlugin({ cwd, manifest, exports, tsconfig }),
                     hashbangPlugin(binaries),
-                    options.minify !== false &&
-                        terser({
-                            output: {
-                                ascii_only: true
-                            }
-                        })
+                    options.minify &&
+                    terser({
+                        output: {
+                            ascii_only: true
+                        }
+                    })
                 ].filter(Boolean)
             })
         }
