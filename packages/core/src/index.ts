@@ -269,7 +269,7 @@ async function kumoya(
                             ascii_only: true
                         }
                     })
-                ].filter(Boolean)
+                ].filter(Boolean) as RolldownOptions['plugins']
             })
         }
     }
