@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cac } from 'cac'
 import { load } from 'tsconfig-utils'
-import kumoya from './index.js'
+import kumoya from './index'
 
 const cli = cac('kumoya [name]')
     .option('--minify', 'Minify output')
