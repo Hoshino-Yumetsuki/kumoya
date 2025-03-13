@@ -13,6 +13,7 @@
     "lint": "eslint packages",
     "lint-fix": "eslint packages --fix",
     "build": "yakumo build --minify",
+    "pre:build": "node --import tsx packages/core/src/bin.ts",
     "publish": "yakumo publish"
   },
   "devDependencies": {
