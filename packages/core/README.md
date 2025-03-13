@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/kumoya?style=flat-square)](https://www.npmjs.com/package/kumoya)
 [![GitHub](https://img.shields.io/github/license/Hoshino-Yumetsuki/kumoya?style=flat-square)](https://github.com/cordiverse/kumoya/blob/master/LICENSE)
 
-Kumoya is a zero-configuration bundler for your TypeScript project.
+Kumoya is a zero-configuration bundler for your TypeScript project, serving as a rolldown implementation for the Dumble builder. This repository is published as an unofficial extension toolkit for the Yakumo nested workspace manager.
 
 It automatically reads `tsconfig.json` and `package.json` to determine what files to bundle, which is the desired format, where to output the files, and more.
 
@@ -157,14 +157,16 @@ kumoya --no-minify
 
 ## Credits
 
-[pkgroll](https://github.com/privatenumber/pkgroll) is a similar project that inspired this one. It actually provides more features, such as
+Kumoya was originally developed as a rolldown implementation for [Dumble](https://github.com/cordiverse/dumble), a TypeScript builder. Without Dumble, there wouldn't be Kumoya.
+
+This repository serves as an unofficial extension toolkit for [Yakumo](https://github.com/shigma/yakumo), a nested workspace manager. It's designed to integrate seamlessly with Yakumo's ecosystem while providing additional bundling capabilities.
+
+[pkgroll](https://github.com/privatenumber/pkgroll) is a similar project that inspired this one. It actually provides more features, such as:
 
 - `--watch`
 - `.d.ts` bundling
 - rollup-based minification (which is slightly smaller than esbuild)
 
-If you find kumoya not satisfying your needs, consider using pkgroll instead (better yet, open an issue or pull request to improve kumoya).
+If you find kumoya not satisfying your needs, consider using yakumo official toolset instead (better yet, open an issue or pull request to improve kumoya).
 
-Compared to pkgroll, kumoya is simpler and more focused on zero-configuration. Also, kumoya can be easily integrated into a monorepo with multiple packages, and can be further customized with esbuild options.
-
-[dumble](https://github.com/cordiverse/dumble) is the original project of this project, without it there wouldn't be kumoya
+Compared to pkgroll, kumoya is simpler and more focused on zero-configuration. Also, kumoya can be easily integrated into a monorepo with multiple packages, and can be further customized.
