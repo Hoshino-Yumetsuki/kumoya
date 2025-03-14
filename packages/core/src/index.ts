@@ -42,7 +42,8 @@ export interface PackageJson
   peerDependenciesMeta?: Record<string, { optional?: boolean }>
 }
 
-async function bundle(options: RolldownOptions, base: string) {
+async function bundle(options: RolldownOptions) {
+  const base = process.cwd()
   const entryPoints = options.input as Record<string, string>
 
   // 获取输出配置
@@ -72,7 +73,7 @@ async function bundle(options: RolldownOptions, base: string) {
 }
 
 const externalPlugin = ({
-  cwd: _cwd,
+  cwd,
   manifest,
   exports: _exports,
   tsconfig: _tsconfig
@@ -132,6 +133,7 @@ const hashbangPlugin = (binaries: string[]): RollupPlugin => ({
 export interface KumoyaOptions {
   minify?: boolean
   env?: Record<string, string>
+  build?: (options: RolldownOptions, callback: (options: RolldownOptions) => Promise<void>) => Promise<void>
 }
 
 export interface KumoyaData {
@@ -351,10 +353,12 @@ async function kumoya(
 
   await Promise.all(tasks)
 
+  const build = _options.build ?? ((options, callback) => callback(options))
+
   await Promise.all(
     matrix.map(async (options) => {
       try {
-        await bundle(options, process.cwd())
+        await build(options, bundle)
       } catch (error) {
         console.error(error)
       }
