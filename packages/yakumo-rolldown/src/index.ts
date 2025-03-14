@@ -2,6 +2,13 @@ import { Context, z } from 'cordis'
 import {} from 'yakumo'
 import { load } from 'tsconfig-utils'
 import kumoya from 'kumoya'
+import type { RolldownOptions } from 'rolldown'
+
+declare module 'yakumo' {
+  interface Events {
+    'yakumo/rolldown'(path: string, options: RolldownOptions, next: () => Promise<void>): Promise<void>
+  }
+}
 
 export const inject = ['yakumo']
 
@@ -23,8 +30,13 @@ export function apply(ctx: Context, config: Config) {
           const cwd = ctx.yakumo.cwd + path
           const tsconfig = await load(cwd).catch(() => null)
           if (!tsconfig) return
-          await kumoya(cwd, ctx.yakumo.workspaces[path] as any, tsconfig, {
-            minify: (ctx.yakumo.argv as any).minify ?? config.minify
+          const options: RolldownOptions = {}
+          const minify = (ctx.yakumo.argv as any).minify ?? config.minify
+          await ctx.waterfall('yakumo/rolldown', path, options, async () => {
+            await kumoya(cwd, ctx.yakumo.workspaces[path] as any, tsconfig, {
+              minify,
+              ...options
+            })
           })
         })
       )
