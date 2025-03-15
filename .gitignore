@@ -34,3 +34,5 @@ report.*.json
 *.ntvs*
 *.njsproj
 *.sln
+
+.VSCodeCounter
