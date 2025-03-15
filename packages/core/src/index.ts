@@ -8,7 +8,7 @@ import {
 } from 'node:path'
 import { isBuiltin } from 'node:module'
 import { TsConfig } from 'tsconfig-utils'
-import { rolldown, RolldownOptions, Plugin as RollupPlugin } from 'rolldown'
+import { rolldown, RolldownOptions, Plugin as RolldownPlugin } from 'rolldown'
 import yaml from 'js-yaml'
 import globby from 'globby'
 import terser from '@rollup/plugin-terser'
@@ -77,7 +77,7 @@ const externalPlugin = ({
   manifest,
   exports: _exports,
   tsconfig: _tsconfig
-}: KumoyaData): RollupPlugin => ({
+}: KumoyaData): RolldownPlugin => ({
   name: 'external-library',
   resolveId(source: string, importer?: string) {
     if (!source) return null
@@ -104,7 +104,7 @@ const externalPlugin = ({
   }
 })
 
-const yamlPlugin = (options: yaml.LoadOptions = {}): RollupPlugin => ({
+const yamlPlugin = (options: yaml.LoadOptions = {}): RolldownPlugin => ({
   name: 'yaml',
   async transform(code, id) {
     if (!id.endsWith('.yml') && !id.endsWith('.yaml')) return null
@@ -116,7 +116,7 @@ const yamlPlugin = (options: yaml.LoadOptions = {}): RollupPlugin => ({
   }
 })
 
-const hashbangPlugin = (binaries: string[]): RollupPlugin => ({
+const hashbangPlugin = (binaries: string[]): RolldownPlugin => ({
   name: 'hashbang',
   async transform(code: string, id: string) {
     if (!binaries.includes(id)) return null
