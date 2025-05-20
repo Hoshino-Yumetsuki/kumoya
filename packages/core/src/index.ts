@@ -133,7 +133,10 @@ const hashbangPlugin = (binaries: string[]): RolldownPlugin => ({
 export interface KumoyaOptions {
   minify?: boolean
   env?: Record<string, string>
-  build?: (options: RolldownOptions, callback: (options: RolldownOptions) => Promise<void>) => Promise<void>
+  build?: (
+    options: RolldownOptions,
+    callback: (options: RolldownOptions) => Promise<void>
+  ) => Promise<void>
 }
 
 export interface KumoyaData {

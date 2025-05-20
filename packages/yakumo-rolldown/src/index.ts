@@ -6,7 +6,11 @@ import type { RolldownOptions } from 'rolldown'
 
 declare module 'yakumo' {
   interface Events {
-    'yakumo/rolldown'(path: string, options: RolldownOptions, next: () => Promise<void>): Promise<void>
+    'yakumo/rolldown'(
+      path: string,
+      options: RolldownOptions,
+      next: () => Promise<void>
+    ): Promise<void>
   }
 }
 

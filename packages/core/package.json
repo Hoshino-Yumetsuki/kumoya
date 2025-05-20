@@ -1,7 +1,7 @@
 {
   "name": "kumoya",
   "description": "Zero-configuration bundler with TypeScript and Rolldown",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,12 +26,12 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.3",
-    "rolldown": "1.0.0-beta.8",
+    "rolldown": "^1.0.0-beta.9",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "rolldown": "1.0.0-beta.8",
+    "rolldown": "^1.0.0-beta.9",
     "typescript": "^5.8.3"
   },
   "dependencies": {
