@@ -12,6 +12,8 @@ import { rolldown, RolldownOptions, Plugin as RolldownPlugin } from 'rolldown'
 import yaml from 'js-yaml'
 import globby from 'globby'
 import terser from '@rollup/plugin-terser'
+import { existsSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 
 type Platform = 'browser' | 'node' | undefined
 
@@ -42,16 +44,90 @@ export interface PackageJson
   peerDependenciesMeta?: Record<string, { optional?: boolean }>
 }
 
+/**
+ * 尝试加载工作目录下的rolldown配置文件
+ * @param cwd 当前工作目录
+ * @returns 配置对象或undefined
+ */
+async function loadUserConfig(
+  cwd: string
+): Promise<Record<string, any> | undefined> {
+  const configFiles = ['rolldown.config.js', 'rolldown.config.mjs']
+
+  for (const file of configFiles) {
+    const configPath = resolve(cwd, file)
+    if (existsSync(configPath)) {
+      try {
+        console.log(`Loading config file: ${file}`)
+        const fileUrl = pathToFileURL(configPath).href
+        const config = await import(fileUrl)
+
+        return config.default || config
+      } catch (error) {
+        console.error(`Failed to load config file ${file}:`, error)
+      }
+    }
+  }
+
+  return undefined
+}
+
+/**
+ * 合并用户配置和内部配置
+ * @param baseOptions 基础配置
+ * @param userConfig 用户配置
+ * @returns 合并后的配置
+ */
+function mergeConfigs(
+  baseOptions: RolldownOptions,
+  userConfig: Record<string, any>
+): RolldownOptions {
+  const mergedOptions = { ...baseOptions }
+
+  if (userConfig.plugins && Array.isArray(userConfig.plugins)) {
+    const basePlugins = Array.isArray(mergedOptions.plugins)
+      ? mergedOptions.plugins
+      : []
+    mergedOptions.plugins = [...basePlugins, ...userConfig.plugins].filter(
+      Boolean
+    ) as RolldownOptions['plugins']
+  }
+
+  for (const key in userConfig) {
+    if (key === 'plugins') continue
+
+    if (key === 'output') {
+      if (Array.isArray(userConfig.output)) {
+        mergedOptions.output = Array.isArray(mergedOptions.output)
+          ? mergedOptions.output.map((item, index) => ({
+              ...item,
+              ...(userConfig.output[index] || {})
+            }))
+          : userConfig.output
+      } else if (typeof userConfig.output === 'object') {
+        mergedOptions.output = {
+          ...(typeof mergedOptions.output === 'object'
+            ? mergedOptions.output
+            : {}),
+          ...userConfig.output
+        }
+      }
+    } else {
+      mergedOptions[key] = userConfig[key]
+    }
+  }
+
+  return mergedOptions
+}
+
 async function bundle(options: RolldownOptions) {
   const base = process.cwd()
   const entryPoints = options.input as Record<string, string>
 
-  // 获取输出配置
   const outputConfig = Array.isArray(options.output)
     ? options.output[0]
     : options.output
 
-  // show entry list
   for (const [key, value] of Object.entries(entryPoints)) {
     const source = relative(base, value)
     const outputDir = outputConfig?.dir
@@ -356,7 +432,20 @@ async function kumoya(
 
   await Promise.all(tasks)
 
-  const build = _options.build ?? ((options, callback) => callback(options))
+  const userConfig = await loadUserConfig(cwd)
+
+  const build =
+    _options.build ??
+    (async (options, callback) => {
+      let finalOptions = options
+
+      if (userConfig) {
+        console.log('Merging user config with built-in config...')
+        finalOptions = mergeConfigs(options, userConfig)
+      }
+
+      return callback(finalOptions)
+    })
 
   await Promise.all(
     matrix.map(async (options) => {
