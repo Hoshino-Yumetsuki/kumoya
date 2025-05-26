@@ -21,9 +21,9 @@ npm install --save-dev kumoya
 
 ```json
 {
-    "scripts": {
-        "build": "tsc -b && kumoya"
-    }
+  "scripts": {
+    "build": "tsc -b && kumoya"
+  }
 }
 ```
 
@@ -39,57 +39,83 @@ npm run build
 
 For most scenarios, you don't need to configure anything. Below are some properties you can set in `tsconfig.json` and `package.json` to customize the build process.
 
+### Custom Rolldown Configuration
+
+Starting from version 1.x.x, kumoya supports custom rolldown configurations. You can create a `rolldown.config.js` or `rolldown.config.mjs` file in your project root to override or extend the default configuration:
+
+```js
+// rolldown.config.js
+export default {
+  // Override or extend the default plugins
+  plugins: [
+    // Your custom plugins
+  ],
+
+  // Custom output configuration
+  output: {
+    // Your output options
+    format: 'es',
+    sourcemap: true
+  }
+
+  // Any other rolldown options
+  // These will be merged with the built-in configuration
+}
+```
+
+When kumoya detects a configuration file, it will merge your custom configuration with the built-in configuration. This allows you to customize specific aspects of the build process while keeping the zero-configuration benefits for everything else.
+
 ```json5
 // tsconfig.json
 {
-    "compilerOptions": {
-        // the input and output directories
-        "rootDir": "src",
-        "outDir": "lib",
+  compilerOptions: {
+    // the input and output directories
+    rootDir: 'src',
+    outDir: 'lib',
 
-        // if you want .d.ts files,
-        // set "declaration" and "emitDeclarationOnly" to true
-        "declaration": true,
-        "emitDeclarationOnly": true,
+    // if you want .d.ts files,
+    // set "declaration" and "emitDeclarationOnly" to true
+    declaration: true,
+    emitDeclarationOnly: true,
 
-        // if you don't want .d.ts files,
-        // simply set "noEmit" to true
-        "noEmit": true,
+    // if you don't want .d.ts files,
+    // simply set "noEmit" to true
+    noEmit: true,
 
-        // target and sourcemaps are also respected
-        "target": "esnext",
-        "sourceMap": true,
-    },
+    // target and sourcemaps are also respected
+    target: 'esnext',
+    sourceMap: true
+  }
 }
 ```
 
 ```json5
 // package.json
 {
-    "name": "my-package",
+  name: 'my-package',
 
-    // module system (https://nodejs.org/api/packages.html#type)
-    "type": "module",
+  // module system (https://nodejs.org/api/packages.html#type)
+  type: 'module',
 
-    // output files
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.cts",
+  // output files
+  main: './dist/index.cjs',
+  module: './dist/index.mjs',
+  types: './dist/index.d.cts',
 
-    // export map (https://nodejs.org/api/packages.html#exports)
-    "exports": {
-        "require": {
-            "types": "./dist/index.d.cts",
-            "default": "./dist/index.cjs"
-        },
-        "import": {
-            "types": "./dist/index.d.mts",
-            "default": "./dist/index.mjs"
-        }
+  // export map (https://nodejs.org/api/packages.html#exports)
+  exports: {
+    require: {
+      types: './dist/index.d.cts',
+      default: './dist/index.cjs'
     },
+    import: {
+      types: './dist/index.d.mts',
+      default: './dist/index.mjs'
+    }
+  },
 
-    // bin files will be compiled to be executable with the Node.js hashbang
-    "bin": "./dist/cli.js",
+  // bin files will be compiled to be executable with the Node.js hashbang
+  bin: './dist/cli.js'
 }
 ```
 
@@ -102,9 +128,9 @@ For most scenarios, you don't need to configure anything. Below are some propert
 | main                    | auto-detected |
 | module                  | esmodule      |
 | types                   | declaration   |
-| exports.*               | auto-detected |
-| exports.*.require       | commonjs      |
-| exports.*.import        | esmodule      |
+| exports.\*              | auto-detected |
+| exports.\*.require      | commonjs      |
+| exports.\*.import       | esmodule      |
 | bin                     | auto-detected |
 
 Auto-detection is based on the extension and the [`type`](https://nodejs.org/api/packages.html#type) field in `package.json`:
