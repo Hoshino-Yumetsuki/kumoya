@@ -9,7 +9,7 @@ declare module 'yakumo' {
     'yakumo/rolldown'(
       path: string,
       options: RolldownOptions,
-      next: () => Promise<void>
+      next: () => Promise<void>,
     ): Promise<void>
   }
 }
@@ -21,7 +21,7 @@ export interface Config {
 }
 
 export const Config: z<Config> = z.object({
-  minify: z.boolean()
+  minify: z.boolean(),
 })
 
 export function apply(ctx: Context, config: Config) {
@@ -30,7 +30,7 @@ export function apply(ctx: Context, config: Config) {
     async () => {
       const paths = ctx.yakumo.locate(ctx.yakumo.argv._)
       await Promise.all(
-        paths.map(async (path) => {
+        paths.map(async path => {
           const cwd = ctx.yakumo.cwd + path
           const tsconfig = await load(cwd).catch(() => null)
           if (!tsconfig) return
@@ -39,14 +39,14 @@ export function apply(ctx: Context, config: Config) {
           await ctx.waterfall('yakumo/rolldown', path, options, async () => {
             await kumoya(cwd, ctx.yakumo.workspaces[path] as any, tsconfig, {
               minify,
-              ...options
+              ...options,
             })
           })
-        })
+        }),
       )
     },
     {
-      boolean: ['minify']
-    }
+      boolean: ['minify'],
+    },
   )
 }

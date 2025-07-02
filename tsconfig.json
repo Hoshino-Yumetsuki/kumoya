@@ -4,8 +4,8 @@
     "baseUrl": ".",
     "paths": {
       "kumoya": ["packages/core/src"],
-      "kumoya-*": ["packages/*/src"],
-    },
+      "kumoya-*": ["packages/*/src"]
+    }
   },
-  "files": [],
+  "files": []
 }

@@ -4,7 +4,7 @@ import {
   isAbsolute,
   join,
   relative,
-  resolve
+  resolve,
 } from 'node:path'
 import { isBuiltin } from 'node:module'
 import { TsConfig } from 'tsconfig-utils'
@@ -21,7 +21,7 @@ export const DependencyType = [
   'dependencies',
   'devDependencies',
   'peerDependencies',
-  'optionalDependencies'
+  'optionalDependencies',
 ] as const
 export type DependencyType = (typeof DependencyType)[number]
 
@@ -50,7 +50,7 @@ export interface PackageJson
  * @returns 配置对象或undefined
  */
 async function loadUserConfig(
-  cwd: string
+  cwd: string,
 ): Promise<Record<string, any> | undefined> {
   const configFiles = ['rolldown.config.js', 'rolldown.config.mjs']
 
@@ -80,7 +80,7 @@ async function loadUserConfig(
  */
 function mergeConfigs(
   baseOptions: RolldownOptions,
-  userConfig: Record<string, any>
+  userConfig: Record<string, any>,
 ): RolldownOptions {
   const mergedOptions = { ...baseOptions }
 
@@ -89,7 +89,7 @@ function mergeConfigs(
       ? mergedOptions.plugins
       : []
     mergedOptions.plugins = [...basePlugins, ...userConfig.plugins].filter(
-      Boolean
+      Boolean,
     ) as RolldownOptions['plugins']
   }
 
@@ -101,7 +101,7 @@ function mergeConfigs(
         mergedOptions.output = Array.isArray(mergedOptions.output)
           ? mergedOptions.output.map((item, index) => ({
               ...item,
-              ...(userConfig.output[index] || {})
+              ...(userConfig.output[index] || {}),
             }))
           : userConfig.output
       } else if (typeof userConfig.output === 'object') {
@@ -109,7 +109,7 @@ function mergeConfigs(
           ...(typeof mergedOptions.output === 'object'
             ? mergedOptions.output
             : {}),
-          ...userConfig.output
+          ...userConfig.output,
         }
       }
     } else {
@@ -140,7 +140,7 @@ async function bundle(options: RolldownOptions) {
     await bundle.write({
       ...outputConfig,
       format: outputConfig?.format || 'es',
-      entryFileNames: '[name]'
+      entryFileNames: '[name]',
     })
     await bundle.close()
   } catch (error) {
@@ -149,10 +149,9 @@ async function bundle(options: RolldownOptions) {
 }
 
 const externalPlugin = ({
-  cwd,
   manifest,
   exports: _exports,
-  tsconfig: _tsconfig
+  tsconfig: _tsconfig,
 }: KumoyaData): RolldownPlugin => ({
   name: 'external-library',
   resolveId(source: string, importer?: string) {
@@ -168,16 +167,14 @@ const externalPlugin = ({
 
     if (name === manifest.name) return { id: source, external: true }
 
-    const types = new Set(
-      DependencyType.filter((type) => manifest[type]?.[name])
-    )
+    const types = new Set(DependencyType.filter(type => manifest[type]?.[name]))
     if (types.size === 0) {
       throw new Error(`Missing dependency: ${name} from ${importer}`)
     }
 
     types.delete('devDependencies')
     return types.size > 0 ? { id: source, external: true } : null
-  }
+  },
 })
 
 const yamlPlugin = (options: yaml.LoadOptions = {}): RolldownPlugin => ({
@@ -187,9 +184,9 @@ const yamlPlugin = (options: yaml.LoadOptions = {}): RolldownPlugin => ({
     const parsed = yaml.load(code, options)
     return {
       code: `export default ${JSON.stringify(parsed)}`,
-      map: { mappings: '' }
+      map: { mappings: '' },
     }
-  }
+  },
 })
 
 const hashbangPlugin = (binaries: string[]): RolldownPlugin => ({
@@ -201,9 +198,9 @@ const hashbangPlugin = (binaries: string[]): RolldownPlugin => ({
     }
     return {
       code,
-      map: { mappings: '' }
+      map: { mappings: '' },
     }
-  }
+  },
 })
 
 export interface KumoyaOptions {
@@ -211,7 +208,7 @@ export interface KumoyaOptions {
   env?: Record<string, string>
   build?: (
     options: RolldownOptions,
-    callback: (options: RolldownOptions) => Promise<void>
+    callback: (options: RolldownOptions) => Promise<void>,
   ) => Promise<void>
 }
 
@@ -242,7 +239,7 @@ async function kumoya(
   cwd: string,
   manifest: PackageJson,
   tsconfig: TsConfig,
-  _options: KumoyaOptions = {}
+  _options: KumoyaOptions = {},
 ) {
   const options = _options
   const {
@@ -250,7 +247,7 @@ async function kumoya(
     outFile,
     noEmit,
     emitDeclarationOnly,
-    sourceMap
+    sourceMap,
   } = tsconfig.compilerOptions
   if (!noEmit && !emitDeclarationOnly) return
   const outDir = tsconfig.compilerOptions.outDir ?? dirname(outFile!)
@@ -268,7 +265,7 @@ async function kumoya(
   > = Object.create(null)
 
   async function resolvePattern(pattern: string) {
-    if (!pattern.startsWith(outDir + '/')) {
+    if (!pattern.startsWith(`${outDir}/`)) {
       pattern = pattern.replace('*', '**')
       const targets = await globby(pattern, { cwd })
       for (const target of targets) {
@@ -288,7 +285,7 @@ async function kumoya(
     pattern: string | undefined,
     preset: RolldownOptions,
     prefix: string | null = '',
-    isBinary = false
+    isBinary = false,
   ) {
     if (!pattern) return
     if (pattern.startsWith('./')) pattern = pattern.slice(2)
@@ -297,7 +294,10 @@ async function kumoya(
       pattern = pattern.slice(0, -3) + targetExt
     }
 
-    const result = await (resolveCache[pattern] ??= resolvePattern(pattern))
+    if (resolveCache[pattern] === undefined) {
+      resolveCache[pattern] = resolvePattern(pattern)
+    }
+    const result = await resolveCache[pattern]
     if (!result) return
 
     const [outExt, targets] = result
@@ -318,9 +318,15 @@ async function kumoya(
       if (outFiles.has(outFile)) return
       outFiles.add(outFile)
       if (!preset.platform) {
-        ;(exports[srcFile] ||= {}).types = `${manifest.name}/${prefix!}`
+        if (!exports[srcFile]) {
+          exports[srcFile] = {}
+        }
+        exports[srcFile].types = `${manifest.name}/${prefix!}`
       } else {
-        ;(exports[srcFile] ||= {})[preset.platform] = outFile
+        if (!exports[srcFile]) {
+          exports[srcFile] = {}
+        }
+        exports[srcFile][preset.platform] = outFile
       }
 
       matrix.push({
@@ -336,7 +342,7 @@ async function kumoya(
               : 'cjs',
           sourcemap: sourceMap,
           exports: 'auto',
-          entryFileNames: '[name]'
+          entryFileNames: '[name]',
         },
         external: [],
         plugins: [
@@ -346,10 +352,10 @@ async function kumoya(
           options.minify &&
             terser({
               output: {
-                ascii_only: true
-              }
-            })
-        ].filter(Boolean) as RolldownOptions['plugins']
+                ascii_only: true,
+              },
+            }),
+        ].filter(Boolean) as RolldownOptions['plugins'],
       })
     }
   }
@@ -360,7 +366,7 @@ async function kumoya(
   function addConditionalExport(
     pattern: string | PackageJsonExports | undefined,
     preset: RolldownOptions,
-    prefix = ''
+    prefix = '',
   ) {
     if (typeof pattern === 'string') {
       tasks.push(addExport(pattern, preset, prefix))
@@ -372,31 +378,31 @@ async function kumoya(
         addConditionalExport(
           pattern[key],
           { ...preset, output: { format: 'cjs' } },
-          prefix
+          prefix,
         )
       } else if (key === 'import') {
         addConditionalExport(
           pattern[key],
           { ...preset, output: { format: 'es' } },
-          prefix
+          prefix,
         )
       } else if (['browser', 'node'].includes(key)) {
         addConditionalExport(
           pattern[key],
           { ...preset, platform: key as Platform },
-          prefix
+          prefix,
         )
       } else if (['types', 'typings'].includes(key)) {
         addConditionalExport(
           pattern[key],
           { ...preset, platform: undefined },
-          prefix
+          prefix,
         )
       } else {
         addConditionalExport(
           pattern[key],
           preset,
-          key.startsWith('.') ? join(prefix, key) : prefix
+          key.startsWith('.') ? join(prefix, key) : prefix,
         )
       }
     }
@@ -405,16 +411,16 @@ async function kumoya(
   const preset: RolldownOptions = {
     platform: 'node',
     output: {
-      format: manifest.type === 'module' ? 'es' : 'cjs'
-    }
+      format: manifest.type === 'module' ? 'es' : 'cjs',
+    },
   }
 
   tasks.push(addExport(manifest.main, preset))
   tasks.push(
     addExport(manifest.module, {
       ...preset,
-      output: { ...preset.output, format: 'es' }
-    })
+      output: { ...preset.output, format: 'es' },
+    }),
   )
   addConditionalExport(manifest.exports, preset)
 
@@ -448,13 +454,13 @@ async function kumoya(
     })
 
   await Promise.all(
-    matrix.map(async (options) => {
+    matrix.map(async options => {
       try {
         await build(options, bundle)
       } catch (error) {
         console.error(error)
       }
-    })
+    }),
   )
 }
 

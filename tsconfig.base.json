@@ -11,6 +11,6 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowImportingTsExtensions": true,
-    "moduleResolution": "bundler",
-  },
+    "moduleResolution": "bundler"
+  }
 }

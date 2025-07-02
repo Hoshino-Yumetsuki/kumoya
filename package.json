@@ -10,13 +10,14 @@
   ],
   "license": "MIT",
   "scripts": {
-    "lint": "eslint packages",
-    "lint-fix": "eslint packages --fix",
+    "lint": "biome check",
+    "lint-fix": "biome format --write",
     "build": "yakumo build --minify",
     "pre:build": "node --import tsx packages/core/src/bin.ts",
     "publish": "yakumo publish"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.0.5",
     "@types/node": "^22.15.3",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
