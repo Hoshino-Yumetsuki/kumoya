@@ -17,7 +17,7 @@ if (!argv.options.help) {
   for (const path of argv.args.length ? argv.args : ['.']) {
     const cwd = resolve(process.cwd(), path)
     const manifest = await readFile(join(cwd, 'package.json'), 'utf8').then(
-      JSON.parse,
+      JSON.parse
     )
     const tsconfig = await load(cwd)
     await kumoya(cwd, manifest, tsconfig, argv.options)
