@@ -44,11 +44,6 @@ export interface PackageJson
   peerDependenciesMeta?: Record<string, { optional?: boolean }>
 }
 
-/**
- * 尝试加载工作目录下的rolldown配置文件
- * @param cwd 当前工作目录
- * @returns 配置对象或undefined
- */
 async function loadUserConfig(
   cwd: string
 ): Promise<Record<string, any> | undefined> {
@@ -72,12 +67,6 @@ async function loadUserConfig(
   return undefined
 }
 
-/**
- * 合并用户配置和内部配置
- * @param baseOptions 基础配置
- * @param userConfig 用户配置
- * @returns 合并后的配置
- */
 function mergeConfigs(
   baseOptions: RolldownOptions,
   userConfig: Record<string, any>
@@ -221,16 +210,27 @@ export interface KumoyaData {
   exports: Record<string, Record<string, string>>
 }
 
-function getOutputExtension(manifest: any): string {
+function getOutputExtension(manifest: any, format?: 'es' | 'cjs'): string {
   if (manifest.exports) {
-    const mainExport =
-      typeof manifest.exports === 'object'
-        ? manifest.exports['.']?.import || manifest.exports['.']?.require
-        : manifest.exports
-    if (mainExport) return extname(mainExport)
+    const exports = manifest.exports['.']
+    if (typeof exports === 'object') {
+      if (format === 'es' && exports.import) {
+        return extname(exports.import)
+      } else if (format === 'cjs' && exports.require) {
+        return extname(exports.require)
+      }
+      const mainExport = exports.import || exports.require
+      if (mainExport) return extname(mainExport)
+    } else if (typeof manifest.exports === 'string') {
+      return extname(manifest.exports)
+    }
   }
 
-  if (manifest.main) {
+  if (format === 'es' && manifest.module) {
+    return extname(manifest.module)
+  } else if (format === 'cjs' && manifest.main) {
+    return extname(manifest.main)
+  } else if (manifest.main) {
     return extname(manifest.main)
   }
 
@@ -292,7 +292,14 @@ async function kumoya(
     if (!pattern) return
     if (pattern.startsWith('./')) pattern = pattern.slice(2)
     if (extname(pattern) === '.js') {
-      const targetExt = getOutputExtension(manifest)
+      const format = Array.isArray(preset.output)
+        ? preset.output[0]?.format
+        : preset.output?.format
+
+      const targetExt = getOutputExtension(
+        manifest,
+        format === 'es' ? 'es' : 'cjs'
+      )
       pattern = pattern.slice(0, -3) + targetExt
     }
 
