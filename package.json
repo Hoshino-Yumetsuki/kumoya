@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "version": "1.0.0",
-  "workspaces": ["examples/*", "external/*", "packages/*"],
+  "workspaces": [
+    "external/*",
+    "packages/*"
+  ],
   "license": "MIT",
   "scripts": {
     "lint": "biome check",

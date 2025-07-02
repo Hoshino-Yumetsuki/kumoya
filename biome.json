@@ -7,7 +7,12 @@
     "useIgnoreFile": true,
     "defaultBranch": "main"
   },
-  "files": { "ignoreUnknown": false, "includes": ["**"] },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**"
+    ]
+  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -77,7 +82,9 @@
         "useValidTypeof": "error",
         "useYield": "error"
       },
-      "security": { "noGlobalEval": "error" },
+      "security": {
+        "noGlobalEval": "error"
+      },
       "style": {
         "noCommonJs": "error",
         "noNamespace": "error",
@@ -146,22 +153,49 @@
       "attributePosition": "auto",
       "bracketSpacing": true
     },
-    "linter": { "enabled": true }
+    "linter": {
+      "enabled": true
+    }
   },
   "json": {
-    "parser": { "allowComments": true, "allowTrailingCommas": true },
-    "formatter": { "indentStyle": "space", "trailingCommas": "none" },
-    "linter": { "enabled": true }
+    "parser": {
+      "allowComments": true,
+      "allowTrailingCommas": true
+    },
+    "formatter": {
+      "indentStyle": "space",
+      "trailingCommas": "none",
+      "expand": "always"
+    },
+    "linter": {
+      "enabled": true
+    }
   },
   "css": {
-    "parser": { "allowWrongLineComments": null, "cssModules": true },
-    "formatter": { "enabled": true, "indentStyle": "space" },
-    "linter": { "enabled": true },
+    "parser": {
+      "allowWrongLineComments": null,
+      "cssModules": true
+    },
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space"
+    },
+    "linter": {
+      "enabled": true
+    },
     "assist": null
   },
-  "html": { "formatter": { "selfCloseVoidElements": "always" } },
+  "html": {
+    "formatter": {
+      "selfCloseVoidElements": "always"
+    }
+  },
   "assist": {
     "enabled": null,
-    "actions": { "source": { "organizeImports": "off" } }
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
   }
 }

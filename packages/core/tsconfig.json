@@ -4,5 +4,7 @@
     "rootDir": "src",
     "outFile": "dist/index.d.ts"
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

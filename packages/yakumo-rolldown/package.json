@@ -5,7 +5,9 @@
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "author": "Q78KG <hoshino-yumetsuki@outlook.com>",
   "license": "MIT",
   "repository": {
@@ -17,7 +19,14 @@
     "url": "https://github.com/shigma/yakumo/issues"
   },
   "homepage": "https://github.com/shigma/yakumo",
-  "keywords": ["monorepo", "workspace", "cli", "script", "esbuild", "build"],
+  "keywords": [
+    "monorepo",
+    "workspace",
+    "cli",
+    "script",
+    "esbuild",
+    "build"
+  ],
   "devDependencies": {
     "cordis": "^4.0.0-beta.2",
     "rolldown": "^1.0.0-beta.9",

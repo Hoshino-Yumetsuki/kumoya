@@ -1,3 +1,6 @@
 {
-  "exclude": [".yarn/**", "scripts"]
+  "exclude": [
+    ".yarn/**",
+    "scripts"
+  ]
 }
