@@ -1,7 +1,7 @@
 {
   "name": "yakumo-rolldown",
   "description": "Rolldown support for Yakumo",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -28,18 +28,17 @@
     "build"
   ],
   "devDependencies": {
-    "cordis": "^4.0.0-beta.2",
     "rolldown": "^1.0.0-beta.9",
     "typescript": "^5.8.3",
     "yakumo": "^2.0.0-alpha.6",
     "yakumo-tsc": "^2.0.0-alpha.3"
   },
   "peerDependencies": {
-    "cordis": "^4.0.0-beta.2",
     "rolldown": "^1.0.0-beta.9",
     "yakumo": "^2.0.0-alpha.6"
   },
   "dependencies": {
+    "cordis": "^4.0.0-beta.5",
     "kumoya": "^2.1.3",
     "schemastery": "^3.16.1",
     "tsconfig-utils": "^4.1.1"
