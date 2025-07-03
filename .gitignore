@@ -36,3 +36,5 @@ report.*.json
 *.sln
 
 .VSCodeCounter
+
+.turbo
