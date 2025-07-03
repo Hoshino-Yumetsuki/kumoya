@@ -13,7 +13,7 @@
     "lint-fix": "biome format --write",
     "build": "yakumo build --minify",
     "pre:build": "turbo run build",
-    "publish": "yakumo publish"
+    "publish": "turbo run publish"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.5",
