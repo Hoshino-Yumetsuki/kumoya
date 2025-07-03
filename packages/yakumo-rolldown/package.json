@@ -9,7 +9,8 @@
     "lib"
   ],
   "scripts": {
-    "build": "node --import tsx ../core/src/bin.ts"
+    "build": "node --import tsx ../core/src/bin.ts",
+    "publish": "yarn npm publish"
   },
   "author": "Q78KG <hoshino-yumetsuki@outlook.com>",
   "license": "MIT",

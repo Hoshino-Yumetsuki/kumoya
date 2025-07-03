@@ -18,6 +18,11 @@
     "dev": {
       "persistent": true,
       "cache": false
+    },
+    "publish": {
+      "dependsOn": [
+        "^publish"
+      ]
     }
   }
 }

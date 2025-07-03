@@ -10,7 +10,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "node --import tsx src/bin.ts"
+    "build": "node --import tsx src/bin.ts",
+    "publish": "yarn npm publish"
   },
   "repository": {
     "type": "git",
