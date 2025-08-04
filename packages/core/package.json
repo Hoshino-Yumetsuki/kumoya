@@ -1,7 +1,7 @@
 {
   "name": "kumoya",
   "description": "Zero-configuration bundler with TypeScript and Rolldown",
-  "version": "2.1.5",
+  "version": "2.1.10",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
