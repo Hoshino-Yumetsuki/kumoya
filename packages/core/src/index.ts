@@ -7,10 +7,14 @@ import {
   resolve
 } from 'node:path'
 import { isBuiltin } from 'node:module'
-import { TsConfig } from 'tsconfig-utils'
-import { rolldown, RolldownOptions, Plugin as RolldownPlugin } from 'rolldown'
+import type { TsConfig } from 'tsconfig-utils'
+import {
+  rolldown,
+  type RolldownOptions,
+  type Plugin as RolldownPlugin
+} from 'rolldown'
 import yaml from 'js-yaml'
-import globby from 'globby'
+import { globby } from 'globby'
 import terser from '@rollup/plugin-terser'
 import { existsSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
@@ -119,8 +123,8 @@ async function bundle(options: RolldownOptions) {
 
   for (const [key, value] of Object.entries(entryPoints)) {
     const source = relative(base, value)
-    const outputDir = outputConfig?.dir
-    const target = relative(base, resolve(outputDir!, key))
+    const outputDir = outputConfig?.dir || ''
+    const target = relative(base, resolve(outputDir, key))
     console.log('rolldown:', source, '->', target)
   }
 
@@ -185,7 +189,7 @@ const hashbangPlugin = (binaries: string[]): RolldownPlugin => ({
   async transform(code: string, id: string) {
     if (!binaries.includes(id)) return null
     if (!code.startsWith('#!')) {
-      code = '#!/usr/bin/env node\n' + code
+      code = `#!/usr/bin/env node\n${code}`
     }
     return {
       code,
@@ -252,7 +256,8 @@ async function kumoya(
     sourceMap
   } = tsconfig.compilerOptions
   if (!noEmit && !emitDeclarationOnly) return
-  const outDir = tsconfig.compilerOptions.outDir ?? dirname(outFile!)
+  const outDir =
+    tsconfig.compilerOptions.outDir ?? (outFile ? dirname(outFile) : '')
 
   const outdir = resolve(cwd, outDir)
   const outbase = resolve(cwd, rootDir)
@@ -271,7 +276,7 @@ async function kumoya(
       pattern = pattern.replace('*', '**')
       const targets = await globby(pattern, { cwd })
       for (const target of targets) {
-        if (!relative(rootDir!, target).startsWith('../')) continue
+        if (!rootDir || !relative(rootDir, target).startsWith('../')) continue
         const filename = join(cwd, target)
         exports[filename] = { default: filename }
       }
@@ -279,7 +284,7 @@ async function kumoya(
     }
     const outExt = extname(pattern)
     const basePattern = pattern.slice(outDir.length + 1, -outExt.length)
-    pattern = basePattern.replace('*', '**') + '.{ts,tsx}'
+    pattern = `${basePattern.replace('*', '**')}.{ts,tsx}`
     return [outExt, await globby(pattern, { cwd: outbase })] as const
   }
 
@@ -330,7 +335,7 @@ async function kumoya(
         if (!exports[srcFile]) {
           exports[srcFile] = {}
         }
-        exports[srcFile].types = `${manifest.name}/${prefix!}`
+        exports[srcFile].types = `${manifest.name}/${prefix || ''}`
       } else {
         if (!exports[srcFile]) {
           exports[srcFile] = {}

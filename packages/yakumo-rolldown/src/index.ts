@@ -1,8 +1,8 @@
-import { Context, z } from 'cordis'
-import {} from 'yakumo'
+import { type Context, z } from 'cordis'
 import { load } from 'tsconfig-utils'
 import kumoya from 'kumoya'
 import type { RolldownOptions } from 'rolldown'
+import type {} from 'yakumo'
 
 declare module 'yakumo' {
   interface Events {

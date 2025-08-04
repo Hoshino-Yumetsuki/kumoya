@@ -1,7 +1,7 @@
 {
   "name": "kumoya",
   "description": "Zero-configuration bundler with TypeScript and Rolldown",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,9 +26,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.15.3",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "@types/node": "^24.1.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
   },
   "peerDependencies": {
     "typescript": "^5.8.3"
@@ -36,9 +36,9 @@
   "dependencies": {
     "@rollup/plugin-terser": "^0.4.4",
     "cac": "^6.7.14",
-    "globby": "^11.1.0",
+    "globby": "^14.1.0",
     "js-yaml": "^4.1.0",
-    "rolldown": "1.0.0-beta.23",
-    "tsconfig-utils": "^4.0.5"
+    "rolldown": "1.0.0-beta.30",
+    "tsconfig-utils": "^4.1.1"
   }
 }
