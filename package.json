@@ -9,7 +9,7 @@
   ],
   "license": "MIT",
   "scripts": {
-    "lint": "biome check && biome lint ",
+    "lint": "biome check && biome lint",
     "lint-fix": "biome format --write && biome lint --write",
     "build": "yakumo build --minify",
     "pre:build": "turbo run build",
